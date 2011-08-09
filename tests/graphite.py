@@ -9,7 +9,7 @@ class GraphiteServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     def __init__(self, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
 
-        self.values = []
+        self.messages = []
 
 class GraphiteHandler(SocketServer.StreamRequestHandler):
     """
