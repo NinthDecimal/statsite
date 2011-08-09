@@ -45,3 +45,4 @@ def parse_line(line):
 
     # Return the metric object
     return (key, value, metric_type, flag)
+

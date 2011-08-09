@@ -54,7 +54,8 @@ class Counter(Metric):
 
     def _fold(self, accum):
         accum.setdefault(self.key, 0)
-        accum[self.key] += self.value
+        sample_rate = self.flag if self.flag else 1.0
+        accum[self.key] += self.value / (1 / sample_rate)
 
 
 class Timer(Metric):
@@ -80,7 +81,7 @@ class Timer(Metric):
 
             # Calculate the inner percentile
             percentile = 90
-            inner_indexes = int(len(vals) * (percentile / 100))
+            inner_indexes = int(len(vals) * (percentile / 100.0))
             lower_idx = (len(vals) - inner_indexes) / 2
             upper_idx = lower_idx + inner_indexes
 
@@ -113,7 +114,7 @@ class Timer(Metric):
         diff_sq = sum([(v-sum)**2 for v in lst])
 
         # Sample size is N-1
-        sample_size = len(lst) - 1
+        sample_size = float(len(lst) - 1)
 
         # Take the sqrt of the ratio, that is the stdev
         return math.sqrt(diff_sq / sample_size)
