@@ -13,6 +13,12 @@ class IntegrationBase(object):
     """
 
     DEFAULT_INTERVAL = 1
+    "The default flush interval for Statsite servers."
+
+    current_statsite_port = 16000
+    current_graphite_port = 12000
+    """The current statsite/graphite ports to use when instantiating
+    servers. These will be incremented."""
 
     def pytest_funcarg__client(self, request):
         """
@@ -20,7 +26,8 @@ class IntegrationBase(object):
         server.
         """
         host = "localhost"
-        port = 16000
+        port = IntegrationBase.current_statsite_port
+        IntegrationBase.current_statsite_port += 1
 
         # TODO: Instantiate server
 
@@ -34,8 +41,12 @@ class IntegrationBase(object):
         """
         This creates a pytest funcarg for a fake Graphite server.
         """
+        host = "localhost"
+        port = IntegrationBase.current_graphite_port
+        IntegrationBase.current_graphite_port += 1
+
         # Instantiate the actual TCP server
-        server = GraphiteServer(("localhost", 12000), GraphiteHandler)
+        server = GraphiteServer(("localhost", port), GraphiteHandler)
         server.allow_reuse_address = True
 
         # Create the thread to run the server and start it up
