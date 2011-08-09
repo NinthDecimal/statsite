@@ -11,6 +11,8 @@ class GraphiteServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     by Graphite in the `messages` list.
     """
 
+    allow_reuse_address = True
+
     def __init__(self, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
 

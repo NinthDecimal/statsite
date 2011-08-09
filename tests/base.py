@@ -2,6 +2,8 @@
 Contains the basic classes for test classes.
 """
 
+import errno
+import random
 import socket
 import time
 import threading
@@ -15,19 +17,13 @@ class IntegrationBase(object):
     DEFAULT_INTERVAL = 1
     "The default flush interval for Statsite servers."
 
-    current_statsite_port = 16000
-    current_graphite_port = 12000
-    """The current statsite/graphite ports to use when instantiating
-    servers. These will be incremented."""
-
     def pytest_funcarg__client(self, request):
         """
         This creates a pytest funcarg for a client to a running Statsite
         server.
         """
         host = "localhost"
-        port = IntegrationBase.current_statsite_port
-        IntegrationBase.current_statsite_port += 1
+        port = 12000
 
         # TODO: Instantiate server
 
@@ -42,12 +38,17 @@ class IntegrationBase(object):
         This creates a pytest funcarg for a fake Graphite server.
         """
         host = "localhost"
-        port = IntegrationBase.current_graphite_port
-        IntegrationBase.current_graphite_port += 1
 
-        # Instantiate the actual TCP server
-        server = GraphiteServer(("localhost", port), GraphiteHandler)
-        server.allow_reuse_address = True
+        # Instantiate the actual TCP server by trying random ports
+        # to make sure they don't stomp on each other.
+        while True:
+            try:
+                port = random.randint(2048, 32768)
+                server = GraphiteServer((host, port), GraphiteHandler)
+                break
+            except socket.error, e:
+                if e[0] != errno.EADDRINUSE:
+                    raise e
 
         # Create the thread to run the server and start it up
         thread = threading.Thread(target=server.serve_forever)
