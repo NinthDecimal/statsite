@@ -6,9 +6,15 @@ Statsite is sending to Graphite.
 import SocketServer
 
 class GraphiteServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    """
+    A fake Graphite server. This server stores all the messages received
+    by Graphite in the `messages` list.
+    """
+
     def __init__(self, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
 
+        # The list of messages we've received, starts empty
         self.messages = []
 
 class GraphiteHandler(SocketServer.StreamRequestHandler):
