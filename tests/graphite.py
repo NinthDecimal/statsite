@@ -18,4 +18,13 @@ class GraphiteHandler(SocketServer.StreamRequestHandler):
     """
 
     def handle(self):
-        pass
+        # Read all the lines from the input and append them to the
+        # messages the server has seen. This is how we "fake" a
+        # Graphite server. The tests are simply expected to test the
+        # order and values of the messages themselves.
+        while True:
+            line = self.rfile.readline()
+            if not line:
+                break
+
+            self.server.messages.append(line)
