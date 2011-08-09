@@ -15,7 +15,6 @@ class Statsite(object):
         must be done during instantiate. If configuration changes in the
         future, a new statsite class must be created.
         """
-
         self.collector =  collector(settings["collector"])
         self.aggregator = aggregator(settings["aggregator"])
         self.flusher    = flusher(settings["flusher"])
