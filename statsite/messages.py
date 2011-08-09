@@ -4,6 +4,7 @@ sub-classes. These are used to wrap the values in the
 incoming messages, and contain them in classes of
 the proper type.
 """
+import math
 import time
 
 class Metric(object):
@@ -29,7 +30,7 @@ class Metric(object):
         self.flag = flag
 
     @classmethod
-    def fold(lst, now):
+    def fold(cls, lst, now):
         """
         Takes a list of the metrics objects and emits lists of (key,value,timestamp)
         pairs.
@@ -46,7 +47,7 @@ class Counter(Metric):
     Represents counter metrics, provided by 'c' type.
     """
     @classmethod
-    def fold(lst, now):
+    def fold(cls, lst, now):
         accumulator = {}
         for item in lst: item._fold(accumulator)
         return [("counts.%s" % key,value,now) for key,value in accumulator.iteritems()]
@@ -61,7 +62,7 @@ class Timer(Metric):
     Represents timing metrics, provided by the 'ms' type.
     """
     @classmethod
-    def fold(lst, now):
+    def fold(cls, lst, now):
         accumulator = {}
         for item in lst: item._fold(accumulator)
 
@@ -75,6 +76,7 @@ class Timer(Metric):
             val_avg = val_sum / val_count
             val_min = vals[0]
             val_max = vals[-1]
+            val_stdev = cls.stdev(vals, val_sum)
 
             # Calculate the inner percentile
             percentile = 90
@@ -86,20 +88,35 @@ class Timer(Metric):
             val_avg_pct = val_sum_pct / inner_indexes
             val_min_pct = vals[lower_idx]
             val_max_pct = vals[upper_idx]
+            val_stdev_pct = cls.stdev(vals[lower_idx:upper_idx], val_sum_pct)
 
             outputs.append(("timers.%s.sum" % key, val_sum, now))
             outputs.append(("timers.%s.mean" % key, val_avg, now))
             outputs.append(("timers.%s.lower" % key, val_min, now))
             outputs.append(("timers.%s.upper" % key, val_max, now))
             outputs.append(("timers.%s.count" % key, val_count, now))
+            outputs.append(("timers.%s.stdev" % key, val_stdev, now))
 
             outputs.append(("timers.%s.sum_%d" % (key, percentile), val_sum_pct, now))
             outputs.append(("timers.%s.mean_%d" % (key, percentile), val_avg_pct, now))
             outputs.append(("timers.%s.lower_%d" % (key, percentile), val_min_pct, now))
             outputs.append(("timers.%s.upper_%d" % (key, percentile), val_max_pct, now))
             outputs.append(("timers.%s.count_%d" % (key, percentile), inner_indexes, now))
+            outputs.append(("timers.%s.stdev_%d" % (key, percentile), val_stdev_pct, now))
 
         return outputs
+
+    @classmethod
+    def _stdev(cls, lst, sum):
+        # Calculate the sum of the difference from the
+        # mean squared
+        diff_sq = sum([(v-sum)**2 for v in lst])
+
+        # Sample size is N-1
+        sample_size = len(lst) - 1
+
+        # Take the sqrt of the ratio, that is the stdev
+        return math.sqrt(diff_sq / sample_size)
 
     def _fold(self, accum):
         accum.setdefault(self.key, [])
