@@ -1,5 +1,11 @@
 from setuptools import setup
 
+# Get the long description by reading the README
+try:
+    readme_content = open("README.rst").read()
+except:
+    readme_content = ""
+
 setup(name='statsite',
       version='0.1.0-dev',
       description='Python statistics server which sends data to Graphite.',
