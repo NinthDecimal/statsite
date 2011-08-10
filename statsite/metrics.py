@@ -109,12 +109,13 @@ class Timer(Metric):
 
     @classmethod
     def _stdev(cls, lst, lst_sum):
+        # Sample size is N-1
+        sample_size = float(len(lst) - 1)
+        if sample_size == 0 : return 0
+
         # Calculate the sum of the difference from the
         # mean squared
         diff_sq = sum([(v-lst_sum)**2 for v in lst])
-
-        # Sample size is N-1
-        sample_size = float(len(lst) - 1)
 
         # Take the sqrt of the ratio, that is the stdev
         return math.sqrt(diff_sq / sample_size)
