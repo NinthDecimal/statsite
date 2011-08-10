@@ -74,7 +74,7 @@ class Timer(Metric):
 
             val_count = len(vals)
             val_sum = sum(vals)
-            val_avg = val_sum / val_count
+            val_avg = float(val_sum) / val_count
             val_min = vals[0]
             val_max = vals[-1]
             val_stdev = cls._stdev(vals, val_sum)
