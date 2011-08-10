@@ -77,7 +77,7 @@ class Timer(Metric):
             val_avg = float(val_sum) / val_count
             val_min = vals[0]
             val_max = vals[-1]
-            val_stdev = cls._stdev(vals, val_sum)
+            val_stdev = cls._stdev(vals, val_avg)
 
             # Calculate the inner percentile
             percentile = 90
@@ -89,7 +89,7 @@ class Timer(Metric):
             val_avg_pct = val_sum_pct / inner_indexes
             val_min_pct = vals[lower_idx]
             val_max_pct = vals[upper_idx]
-            val_stdev_pct = cls._stdev(vals[lower_idx:upper_idx], val_sum_pct)
+            val_stdev_pct = cls._stdev(vals[lower_idx:upper_idx], val_avg_pct)
 
             outputs.append(("timers.%s.sum" % key, val_sum, now))
             outputs.append(("timers.%s.mean" % key, val_avg, now))
@@ -108,14 +108,14 @@ class Timer(Metric):
         return outputs
 
     @classmethod
-    def _stdev(cls, lst, lst_sum):
+    def _stdev(cls, lst, lst_avg):
         # Sample size is N-1
         sample_size = float(len(lst) - 1)
         if sample_size == 0 : return 0
 
         # Calculate the sum of the difference from the
         # mean squared
-        diff_sq = sum([(v-lst_sum)**2 for v in lst])
+        diff_sq = sum([(v-lst_avg)**2 for v in lst])
 
         # Take the sqrt of the ratio, that is the stdev
         return math.sqrt(diff_sq / sample_size)
