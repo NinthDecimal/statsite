@@ -4,91 +4,109 @@ used to collect statistics over a given time interval,
 aggregate and then submit to Graphite.
 """
 import logging
-import Queue
 import time
 import threading
 
 class Aggregator(threading.Thread):
-    def __init__(self, interval):
+    def __init__(self, interval, metrics_store):
+        """
+        An aggregator simple accumulates metrics until it is started via
+        :meth:`start()`. This starts a new thread, in which the stored metrics
+        will be aggregated and then flushed to the proper metrics store.
+
+        The aggregator is not designed to be thread safe, meaning only a single
+        thread should call :meth:`add_metric()` and once it is started, no more
+        calls to :meth:`add_metric()` should be made.
+
+        :Parameters:
+            - `metrics_store` : The metrics storage instance to flush to.
+        """
         super(Aggregator, self).__init__()
-        if not isinstance(interval, (int,float)): raise ValueError, "Interval must be numeric!"
-        if interval <= 0: raise ValueError, "Interval must be positive!"
-
-        # Store the rotation interval
-        self.interval = interval
-
-        # Store the metrics queue and creation time
-        self.metrics_queue = Queue.Queue()
-        self.queue_time = time.time()
-
-        # Should be running for now
-        self.should_run = True
-
-        # Create a logger
+        self.metrics_queue = []
+        self.metrics_store = metrics_store
         self.logger = logging.getLogger("statsite.Aggregator")
 
     def add_metric(self, metric):
-        # Push the metric into our queue
-        self.metrics_queue.put(metric)
-
-    def shutdown(self):
-        """Instructs the aggregator to begin shutting down"""
-        self.should_run = False
-        self.logger.info("Shutdown triggered")
+        """Adds a new metric to be aggregated"""
+        self.metrics_queue.append(metric)
 
     def run(self):
+        """
+        Override the threading.Thread implementation to
+        instead aggregate the metrics and then flush them.
+        """
         self.logger.info("Aggregator started")
-        while self.should_run:
-            try:
-                self._wait_for_interval()
-                queue = self._swap_queues()
-                data = self._aggregate_queue(queue)
-                self._flush_metrics(data)
-            except:
-                self.logger.exception("Failed to aggregate interval data!")
+
+        try:
+            data = self.aggregate_queue()
+        except:
+            data = None
+            self.logger.exception("Failed to aggregate interval data!")
+
+        try:
+            if data: self.metrics_store.flush(data)
+        except:
+            self.logger.exception("Failed to flush interval data!")
 
         self.logger.info("Aggregator shutdown")
 
-    def _wait_for_interval(self):
-        """Blocks execution until the next aggregation interval"""
-        time.sleep(self.interval)
-
-    def _swap_queues(self):
+    def aggregate_queue(self):
         """
-        Swaps the aggregation queues so we can aggregate the old queue safely
-        Returns the old queue.
+        Aggregates our metrics and returns a list of (key,value,timestamp) pairs.
         """
-        # Save the old queue
-        old_queue = self.metrics_queue
-
-        # Swap to the new queue
-        new_queue = Queue.Queue()
-        self.metrics_queue = new_queue
-
-        # Return the old queue, there is no way writes will go through now
-        return old_queue
-
-    def _aggregate_queue(self, queue):
         # Sort the queue by the type of metric
         metric_types = {}
-        while not queue.empty():
-            metric = queue.get()
+        for metric in self.metrics_queue:
             metric_types.setdefault(type(metric),[])
             metric_types[type(metric)].append(metric)
 
         # Fold over the metrics by class
         data = []
         now = time.time()
-        for cls in metric_types.keys():
-            raw = metric_types[cls]
+        for cls,raw in metric_types.iteritems():
             aggregated = cls.fold(raw, now)
             data.extend(aggregated)
 
         return data
 
-    def _flush_metrics(self, data):
-        pass
 
+class AggregatorProxy(object):
+    def __init__(self, interval, metrics_store, aggregator_cls=Aggregator):
+        """
+        Serves as a proxy to the aggregator that we are using underneath,
+        and rotates the aggegator on an interval. This allows us to use a single
+        aggregator for a given interval, and then perform the aggregation and flushing
+        in a different thread.
 
+        :Parameters:
+            - `interval` : The interval to flush on, in seconds.
+            - `metrics_store` : The metrics storage instance to use.
+            - `aggregator_cls` (optional) : The underlying aggregator implementation
+            to use. This defaults to Aggregator.
+        """
+        if not isinstance(interval, (int,float)): raise ValueError, "Interval must be numeric!"
+        if interval <= 0: raise ValueError, "Interval must be positive!"
 
+        # Store the inputs
+        self.interval = interval
+        self.metrics_store = metrics_store
+        self.aggregator_cls = aggregator_cls
+
+        # Create an aggregator and time
+        self.aggregator = self.aggregator_cls(self.metrics_store)
+        self.create_time = time.time()
+
+    def add_metric(self, metric):
+        """
+        Adds a new metric object to be aggregated in the future.
+        """
+        # Check if we need to rotate the aggregator
+        now = time.time()
+        if now - self.create_time > self.interval:
+            self.aggregator.start()
+            self.aggregator = self.aggregator_cls(self.metrics_store)
+            self.create_time = now
+
+        # Store the metrics
+        self.aggregator.add_metric(metric)
 
