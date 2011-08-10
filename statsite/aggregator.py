@@ -26,9 +26,9 @@ class Aggregator(threading.Thread):
         self.metrics_store = metrics_store
         self.logger = logging.getLogger("statsite.Aggregator")
 
-    def add_metric(self, metric):
-        """Adds a new metric to be aggregated"""
-        self.metrics_queue.append(metric)
+    def add_metrics(self, metrics):
+        """Add new metrics to be aggregated"""
+        self.metrics_queue.extend(metrics)
 
     def run(self):
         """
@@ -96,9 +96,9 @@ class AggregatorProxy(object):
         self.aggregator = self.aggregator_cls(self.metrics_store)
         self.create_time = time.time()
 
-    def add_metric(self, metric):
+    def add_metrics(self, metrics):
         """
-        Adds a new metric object to be aggregated in the future.
+        Adds a list of metric objects to be aggregated in the future
         """
         # Check if we need to rotate the aggregator
         now = time.time()
@@ -108,5 +108,5 @@ class AggregatorProxy(object):
             self.create_time = now
 
         # Store the metrics
-        self.aggregator.add_metric(metric)
+        self.aggregator.add_metrics(metrics)
 
