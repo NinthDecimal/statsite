@@ -2,7 +2,7 @@
 Contains tests for the base metric class.
 """
 
-import statsite.messages as m
+import statsite.metrics as m
 
 class TestMetric(object):
     def test_fold_basic(self):
