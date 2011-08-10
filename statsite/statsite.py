@@ -3,9 +3,10 @@ Contains the main Statsite class which is what should be instantiated
 for running a server.
 """
 import threading
-from graphite import GraphiteStore
-from udpcollector import CollectorServer
-from aggregator import AggregatorProxy
+
+from aggregator import DefaultAggregator
+from collector import UDPCollector
+from metrics_store import GraphiteStore
 
 class Statsite(threading.Thread):
     """
@@ -13,7 +14,7 @@ class Statsite(threading.Thread):
     and running a Statsite server.
     """
 
-    def __init__(self, settings, collector=CollectorServer, aggregator=AggregatorProxy,
+    def __init__(self, settings={}, collector=UDPCollector, aggregator=DefaultAggregator,
                  store=GraphiteStore):
         """
         Initializes a new Statsite server instance. All configuration
@@ -21,6 +22,11 @@ class Statsite(threading.Thread):
         future, a new statsite class must be created.
         """
         super(Statsite, self).__init__()
+
+        # Setup some basic defaults
+        settings.setdefault("aggregator", {})
+        settings.setdefault("collector", {})
+        settings.setdefault("store", {})
 
         # Setup the store
         self.store = store(**settings["store"])

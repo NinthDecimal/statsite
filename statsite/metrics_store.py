@@ -66,6 +66,13 @@ class GraphiteStore(MetricsStore):
         finally:
             self.sock_lock.release()
 
+    def close(self):
+        """
+        Closes the connection. The socket will be recreated on the next
+        flush.
+        """
+        self.sock.close()
+
     def _create_socket(self):
         """Creates a socket and connects to the graphite server"""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

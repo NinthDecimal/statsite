@@ -25,6 +25,12 @@ class TestGraphiteStore(TestBase):
         # Flush the metrics and verify that graphite sees the
         # proper results
         store.flush(metrics)
+        store.close()
 
-        metric_strings = ["%s %s %s\n" % metric for metric in metrics]
-        assert metric_strings == graphite.messages
+        # Check that we get the proper results after a specific
+        # flush interval to give the test time to send the data
+        def check():
+            metric_strings = ["%s %s %s\n" % metric for metric in metrics]
+            assert metric_strings == graphite.messages
+
+        self.after_flush_interval(check, interval=1)

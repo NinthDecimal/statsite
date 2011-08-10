@@ -22,7 +22,7 @@ class TestBase(object):
         """
         This creates a fake aggregator instance and returns it.
         """
-        return DumbAggregator()
+        return DumbAggregator(self.pytest_funcarg__metrics_store(request))
 
     def pytest_funcarg__metrics_store(self, request):
         """
