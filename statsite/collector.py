@@ -38,6 +38,13 @@ class Collector(object):
         """
         raise NotImplementedError("shutdown must be implemented")
 
+    def set_aggregator(self, aggregator):
+        """
+        This method may be periodically called to change the aggregator
+        underneath the collector object.
+        """
+        self.aggregator = aggregator
+
     def parse_metrics(self, message, ignore_errors=False):
         """
         Given a raw message of metrics split by newline characters, this will

@@ -55,3 +55,14 @@ class TestCollector(TestBase):
         Collector(aggregator).add_metrics(metrics)
 
         assert metrics == aggregator.metrics
+
+    def test_set_aggregator(self, aggregator):
+        """
+        Tests that setting an aggregator properly works.
+        """
+        coll    = Collector(aggregator)
+        new_agg = object()
+
+        assert aggregator is coll.aggregator
+        coll.set_aggregator(new_agg)
+        assert new_agg is coll.aggregator
