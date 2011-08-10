@@ -48,9 +48,12 @@ class GraphiteStore(object):
        :Parameters:
         - `metrics` : A list of (key,value,timestamp) tuples.
         """
+        # Construct the output
+        data = "\n".join(["%s %s %s" % metric for metric in metrics]) + "\n"
+
+        # Serialize writes to the socket
         self.sock_lock.acquire()
         try:
-            data = "\n".join(["%s %s %s" % metric for metric in metrics]) + "\n"
             self._write_metric(data)
         except:
             self.logger.exception("Failed to write out the metrics!")
