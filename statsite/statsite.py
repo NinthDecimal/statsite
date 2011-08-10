@@ -2,32 +2,43 @@
 Contains the main Statsite class which is what should be instantiated
 for running a server.
 """
+import threading
+from graphite import GraphiteStore
+from udpcollector import CollectorServer
+from aggregator import AggregatorProxy
 
-class Statsite(object):
+class Statsite(threading.Thread):
     """
     Statsite is the main entrypoint class for instantiating, configuring,
     and running a Statsite server.
     """
 
-    def __init__(self, collector, aggregator, flusher, settings):
+    def __init__(self, settings, collector=CollectorServer, aggregator=AggregatorProxy,
+                 store=GraphiteStore):
         """
         Initializes a new Statsite server instance. All configuration
         must be done during instantiate. If configuration changes in the
         future, a new statsite class must be created.
         """
-        self.collector =  collector(settings["collector"])
-        self.aggregator = aggregator(settings["aggregator"])
-        self.flusher    = flusher(settings["flusher"])
+        super(Statsite, self).__init__()
 
-    def start(self):
+        # Setup the store
+        self.store = store(**settings["store"])
+
+        # Setup the aggregator, provide the store
+        settings["aggregator"]["metrics_store"] = self.store
+        self.aggregator = aggregator(**settings["aggregator"])
+
+        # Setup the collector, provide the aggregator
+        settings["collector"]["aggregator"] = self.aggregator
+        self.collector =  collector(**settings["collector"])
+
+    def run(self):
         """
         This starts the actual statsite server. This will run in a
         separate thread and return immediately.
         """
-        # TODO: These need to go into separate threads
-        self.flusher.start()
-        self.aggregator.start(flusher=self.flusher)
-        self.collector.start(aggregator=self.aggregator)
+        self.collector.serve_forever()
 
     def shutdown(self):
         """
@@ -38,4 +49,5 @@ class Statsite(object):
         period, rather than immediately flushing it, since this can cause
         inaccurate statistics.
         """
-        pass
+        self.collector.shutdown()
+
