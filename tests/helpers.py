@@ -10,10 +10,14 @@ class DumbAggregator(Aggregator):
     def __init__(self, *args, **kwargs):
         super(DumbAggregator, self).__init__(*args, **kwargs)
 
+        self.flushed = False
         self.metrics = []
 
     def add_metrics(self, metrics):
         self.metrics.extend(metrics)
+
+    def flush(self):
+        self.flushed = True
 
 class DumbCollector(Collector):
     pass
