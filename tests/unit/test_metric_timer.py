@@ -16,8 +16,8 @@ class TestTimerMetric(object):
                    Timer("j", 8)]
         result = Timer.fold(metrics, now)
 
-        assert ("k", 25, now) == self._get_metric("timers.k.sum", result)
-        assert ("j", 15, now) == self._get_metric("timers.j.sum", result)
+        assert ("timers.k.sum", 25, now) == self._get_metric("timers.k.sum", result)
+        assert ("timers.j.sum", 15, now) == self._get_metric("timers.j.sum", result)
 
     def _get_metric(self, key, metrics):
         """
