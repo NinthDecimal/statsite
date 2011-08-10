@@ -68,7 +68,7 @@ class Timer(Metric):
         for item in lst: item._fold(accumulator)
 
         outputs = []
-        for key,vals in accumulator.itemitems():
+        for key,vals in accumulator.iteritems():
             # Sort the values
             vals.sort()
 
@@ -77,7 +77,7 @@ class Timer(Metric):
             val_avg = val_sum / val_count
             val_min = vals[0]
             val_max = vals[-1]
-            val_stdev = cls.stdev(vals, val_sum)
+            val_stdev = cls._stdev(vals, val_sum)
 
             # Calculate the inner percentile
             percentile = 90
@@ -89,7 +89,7 @@ class Timer(Metric):
             val_avg_pct = val_sum_pct / inner_indexes
             val_min_pct = vals[lower_idx]
             val_max_pct = vals[upper_idx]
-            val_stdev_pct = cls.stdev(vals[lower_idx:upper_idx], val_sum_pct)
+            val_stdev_pct = cls._stdev(vals[lower_idx:upper_idx], val_sum_pct)
 
             outputs.append(("timers.%s.sum" % key, val_sum, now))
             outputs.append(("timers.%s.mean" % key, val_avg, now))
@@ -108,10 +108,10 @@ class Timer(Metric):
         return outputs
 
     @classmethod
-    def _stdev(cls, lst, sum):
+    def _stdev(cls, lst, lst_sum):
         # Calculate the sum of the difference from the
         # mean squared
-        diff_sq = sum([(v-sum)**2 for v in lst])
+        diff_sq = sum([(v-lst_sum)**2 for v in lst])
 
         # Sample size is N-1
         sample_size = float(len(lst) - 1)
