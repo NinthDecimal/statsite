@@ -38,7 +38,7 @@ class Collector(object):
         """
         raise NotImplementedError("shutdown must be implemented")
 
-    def parse_metrics(message, ignore_errors=False):
+    def parse_metrics(self, message, ignore_errors=False):
         """
         Given a raw message of metrics split by newline characters, this will
         parse the metrics and return an array of metric objects.
@@ -59,7 +59,7 @@ class Collector(object):
 
         return results
 
-    def add_metrics(metrics):
+    def add_metrics(self, metrics):
         """
         Adds the given array of metrics to the aggregator.
         """
@@ -98,7 +98,7 @@ class UDPCollectorSocketServer(SocketServer.UDPServer):
 
         SocketServer.UDPServer.__init__(self, *args, **kwargs)
 
-class UDPCollectorSocketHandler(SocketServer.RequestHandler):
+class UDPCollectorSocketHandler(SocketServer.BaseRequestHandler):
     """
     Simple handler that receives UDP packets, parses them, and adds
     them to the aggregator.

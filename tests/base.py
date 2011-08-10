@@ -8,12 +8,18 @@ import socket
 import time
 import threading
 from graphite import GraphiteServer, GraphiteHandler
-from metrics_store import DumbMetricsStore
+from helpers import DumbAggregator, DumbMetricsStore
 
 class UnitBase(object):
     """
     This is the base class for unit tests of statsite.
     """
+
+    def pytest_funcarg__aggregator(self, request):
+        """
+        This creates a fake aggregator instance and returns it.
+        """
+        return DumbAggregator()
 
     def pytest_funcarg__metrics_store(self, request):
         """

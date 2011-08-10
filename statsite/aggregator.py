@@ -57,7 +57,7 @@ class Aggregator(object):
 
         return data
 
-class DefaultAggregator(object):
+class DefaultAggregator(Aggregator):
     def __init__(self, *args, **kwargs):
         super(DefaultAggregator, self).__init__(*args, **kwargs)
 

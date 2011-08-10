@@ -3,10 +3,11 @@ Contains tests for the collector base class.
 """
 
 import pytest
-from statsite.metrics import KeyValue, Timer
+from tests.base import UnitBase
+from statsite.metrics import Counter, KeyValue, Timer
 from statsite.collector import Collector
 
-class TestCollector(object):
+class TestCollector(UnitBase):
     def test_stores_aggregator(self):
         """
         Tests that collectors will store aggregator objects.
@@ -44,9 +45,13 @@ class TestCollector(object):
 
         assert 0 == len(results)
 
-    def test_add_metrics(self):
+    def test_add_metrics(self, aggregator):
         """
         Tests that add_metrics successfully adds an array of metrics to
         the configured aggregator.
         """
-        pass
+        now = 17
+        metrics = [KeyValue("k", 1, now), Counter("j", 2)]
+        Collector(aggregator).add_metrics(metrics)
+
+        assert metrics == aggregator.metrics
