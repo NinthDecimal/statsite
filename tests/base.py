@@ -10,10 +10,13 @@ import threading
 from graphite import GraphiteServer, GraphiteHandler
 from helpers import DumbAggregator, DumbMetricsStore
 
-class UnitBase(object):
+class TestBase(object):
     """
     This is the base class for unit tests of statsite.
     """
+
+    DEFAULT_INTERVAL = 1
+    "The default flush interval for Statsite servers."
 
     def pytest_funcarg__aggregator(self, request):
         """
@@ -26,14 +29,6 @@ class UnitBase(object):
         This creates a fake metrics store instance and returns it.
         """
         return DumbMetricsStore()
-
-class IntegrationBase(object):
-    """
-    This is the base class for integration tests of Statsite.
-    """
-
-    DEFAULT_INTERVAL = 1
-    "The default flush interval for Statsite servers."
 
     def pytest_funcarg__client(self, request):
         """

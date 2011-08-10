@@ -13,10 +13,11 @@ class GraphiteServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 
     allow_reuse_address = True
 
-    def __init__(self, *args, **kwargs):
-        SocketServer.TCPServer.__init__(self, *args, **kwargs)
+    def __init__(self, address, *args, **kwargs):
+        SocketServer.TCPServer.__init__(self, address, *args, **kwargs)
 
-        # The list of messages we've received, starts empty
+        # Store the host/port data and messages for users of the server
+        self.host, self.port = address
         self.messages = []
 
 class GraphiteHandler(SocketServer.StreamRequestHandler):

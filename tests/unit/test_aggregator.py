@@ -4,11 +4,11 @@ as the default aggregator class.
 """
 
 import time
-from tests.base import UnitBase
+from tests.base import TestBase
 from statsite.aggregator import Aggregator, DefaultAggregator
 from statsite.metrics import Counter, KeyValue
 
-class TestAggregator(object):
+class TestAggregator(TestBase):
     def test_fold_metrics_works(self, monkeypatch):
         """
         Tests that aggregators can fold metrics properly.
@@ -21,7 +21,7 @@ class TestAggregator(object):
         assert 1 == result.count(("k", 1, now))
         assert 1 == result.count(("counts.j", 2, now))
 
-class TestDefaultAggregator(UnitBase):
+class TestDefaultAggregator(TestBase):
     def test_flushes_collected_metrics(self, metrics_store):
         """
         Tests that the default aggregator properly flushes the

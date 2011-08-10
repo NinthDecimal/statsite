@@ -3,11 +3,11 @@ Contains tests for the collector base class.
 """
 
 import pytest
-from tests.base import UnitBase
+from tests.base import TestBase
 from statsite.metrics import Counter, KeyValue, Timer
 from statsite.collector import Collector
 
-class TestCollector(UnitBase):
+class TestCollector(TestBase):
     def test_stores_aggregator(self):
         """
         Tests that collectors will store aggregator objects.
