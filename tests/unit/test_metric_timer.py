@@ -62,6 +62,34 @@ class TestTimerMetric(object):
         assert ("timers.k.upper", 15, now) == self._get_metric("timers.k.upper", result)
         assert ("timers.j.upper", 8, now) == self._get_metric("timers.j.upper", result)
 
+    def test_fold_count(self):
+        """
+        Tests the counter of timers is properly computed.
+        """
+        now = 10
+        metrics = [Timer("k", 10),
+                   Timer("k", 15),
+                   Timer("j", 7.9),
+                   Timer("j", 8)]
+        result = Timer.fold(metrics, now)
+
+        assert ("timers.k.count", 2, now) == self._get_metric("timers.k.count", result)
+        assert ("timers.j.count", 2, now) == self._get_metric("timers.j.count", result)
+
+    def test_fold_stdev(self):
+        """
+        Tests the standard deviations of counters is properly computed.
+        """
+        now = 10
+        metrics = [Timer("k", 10),
+                   Timer("k", 15),
+                   Timer("j", 7.9),
+                   Timer("j", 8)]
+        result = Timer.fold(metrics, now)
+
+        assert ("timers.k.stdev", Timer._stdev([10, 15], 12.5), now) == self._get_metric("timers.k.stdev", result)
+        assert ("timers.j.stdev", Timer._stdev([7.9, 8], 7.95), now) == self._get_metric("timers.j.stdev", result)
+
     def test_stdev(self):
         """
         Tests that the standard deviation is properly computed.
