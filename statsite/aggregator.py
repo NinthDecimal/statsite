@@ -5,108 +5,80 @@ aggregate and then submit to Graphite.
 """
 import logging
 import time
-import threading
 
-class Aggregator(threading.Thread):
-    def __init__(self, interval, metrics_store):
+class Aggregator(object):
+    def __init__(self, metrics_store):
         """
-        An aggregator simple accumulates metrics until it is started via
-        :meth:`start()`. This starts a new thread, in which the stored metrics
-        will be aggregated and then flushed to the proper metrics store.
+        An aggregator accumulates metrics via the :meth:`add_metrics()` call
+        until :meth:`flush()` is called. Flushing will be initiated in a new
+        thread by the caller. Once flush is called, :meth:`add_metrics()` is
+        guaranteed to never be called again. :meth:`flush()` is expected to
+        send the aggregated metrics to the metrics store.
 
-        The aggregator is not designed to be thread safe, meaning only a single
-        thread should call :meth:`add_metric()` and once it is started, no more
-        calls to :meth:`add_metric()` should be made.
+        Aggregators currently do not need to be thread safe. Only a single
+        thread will call :meth:`add_metric()` at any given time.
 
         :Parameters:
-            - `metrics_store` : The metrics storage instance to flush to.
+            - `metrics_store`: The metrics storage instance to flush to.
         """
-        super(Aggregator, self).__init__()
-        self.metrics_queue = []
         self.metrics_store = metrics_store
-        self.logger = logging.getLogger("statsite.Aggregator")
 
     def add_metrics(self, metrics):
-        """Add new metrics to be aggregated"""
-        self.metrics_queue.extend(metrics)
-
-    def run(self):
         """
-        Override the threading.Thread implementation to
-        instead aggregate the metrics and then flush them.
+        Add a collection of metrics to be aggregated in the next flushing
+        period.
         """
-        self.logger.info("Aggregator started")
+        raise NotImplementedError()
 
-        try:
-            data = self.aggregate_queue()
-        except:
-            data = None
-            self.logger.exception("Failed to aggregate interval data!")
-
-        try:
-            if data: self.metrics_store.flush(data)
-        except:
-            self.logger.exception("Failed to flush interval data!")
-
-        self.logger.info("Aggregator shutdown")
-
-    def aggregate_queue(self):
+    def flush(self):
         """
-        Aggregates our metrics and returns a list of (key,value,timestamp) pairs.
+        This method will be called to run in a specific thread. It is responsible
+        for flushing the collected metrics to the metrics store.
         """
-        # Sort the queue by the type of metric
-        metric_types = {}
-        for metric in self.metrics_queue:
-            metric_types.setdefault(type(metric),[])
-            metric_types[type(metric)].append(metric)
+        raise NotImplementedError()
 
-        # Fold over the metrics by class
+    def _fold_metrics(self, metrics):
+        """
+        This method will go over an array of metric objects and fold them into
+        a list of data.
+        """
+        # Store the metrics as a dictionary by queue type
+        metrics_by_type = {}
+        for metric in metrics:
+            key = type(metric)
+            metrics_by_type.setdefault(key, [])
+            metrics_by_type[key].append(metric)
+
+        # Fold over the metrics
         data = []
-        now = time.time()
-        for cls,raw in metric_types.iteritems():
-            aggregated = cls.fold(raw, now)
-            data.extend(aggregated)
+        now = int(time.time())
+        for cls,metrics in metrics_by_type.iteritems():
+            data.extend(cls.fold(metrics, now))
 
         return data
 
+class DefaultAggregator(object):
+    def __init__(self, *args, **kwargs):
+        super(DefaultAggregator, self).__init__(*args, **kwargs)
 
-class AggregatorProxy(object):
-    def __init__(self, interval, metrics_store, aggregator_cls=Aggregator):
-        """
-        Serves as a proxy to the aggregator that we are using underneath,
-        and rotates the aggegator on an interval. This allows us to use a single
-        aggregator for a given interval, and then perform the aggregation and flushing
-        in a different thread.
-
-        :Parameters:
-            - `interval` : The interval to flush on, in seconds.
-            - `metrics_store` : The metrics storage instance to use.
-            - `aggregator_cls` (optional) : The underlying aggregator implementation
-            to use. This defaults to Aggregator.
-        """
-        if not isinstance(interval, (int,float)): raise ValueError, "Interval must be numeric!"
-        if interval <= 0: raise ValueError, "Interval must be positive!"
-
-        # Store the inputs
-        self.interval = interval
-        self.metrics_store = metrics_store
-        self.aggregator_cls = aggregator_cls
-
-        # Create an aggregator and time
-        self.aggregator = self.aggregator_cls(self.metrics_store)
-        self.create_time = time.time()
+        self.metrics_queue = []
+        self.logger = logging.getLogger("statsite.aggregator")
 
     def add_metrics(self, metrics):
-        """
-        Adds a list of metric objects to be aggregated in the future
-        """
-        # Check if we need to rotate the aggregator
-        now = time.time()
-        if now - self.create_time > self.interval:
-            self.aggregator.start()
-            self.aggregator = self.aggregator_cls(self.metrics_store)
-            self.create_time = now
+        self.metrics_queue.extend(metrics)
 
-        # Store the metrics
-        self.aggregator.add_metrics(metrics)
+    def flush(self):
+        self.logger.info("Aggregating data...")
 
+        try:
+            data = self._fold_metrics(self.metrics_queue)
+        except:
+            self.logger.exception("Failed to fold metrics data")
+
+        try:
+            if data:
+                self.metrics_store.flush(data)
+        except:
+            self.logger.exception("Failed to flush data")
+
+        self.logger.info("Aggregation complete.")

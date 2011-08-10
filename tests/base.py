@@ -8,6 +8,18 @@ import socket
 import time
 import threading
 from graphite import GraphiteServer, GraphiteHandler
+from metrics_store import DumbMetricsStore
+
+class UnitBase(object):
+    """
+    This is the base class for unit tests of statsite.
+    """
+
+    def pytest_funcarg__metrics_store(self, request):
+        """
+        This creates a fake metrics store instance and returns it.
+        """
+        return DumbMetricsStore()
 
 class IntegrationBase(object):
     """
