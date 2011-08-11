@@ -47,3 +47,43 @@ class TestBasic(TestBase):
 
         # Verify they were properly received
         self.after_flush_interval(check)
+
+    def test_clears_after_flush_interval(self, servers):
+        """
+        Tests that after the flush interval, the data is cleared and
+        only new data is sent to the graphite server.
+        """
+        client, graphite = servers
+
+        messages = [("k", 1, int(time.time())), ("j", 2, int(time.time()))]
+
+        # Send the first message and wait the flush interval
+        client.send("%s:%s|kv|@%d" % messages[0])
+        self.after_flush_interval(lambda: None)
+
+        # Send the second message
+        client.send("%s:%s|kv|@%d" % messages[1])
+
+        # Check the results after the flush interval
+        def check():
+            raw_messages = ["%s %s %s" % message for message in messages]
+            assert raw_messages == graphite.messages
+
+        self.after_flush_interval(check)
+
+    def test_no_data_before_flush_interval(self, servers):
+        """
+        Tests that the data is flushed on the flush interval.
+        """
+        statsite_init_time = time.time()
+        client, graphite = servers
+
+        # Send some data to graphite and wait the flush interval
+        client.send("k:1|kv")
+        self.after_flush_interval(lambda: None)
+
+        # Verify that the data was received at least after the
+        # flush interval
+        duration = graphite.last_receive - statsite_init_time
+        epsilon  = 0.1
+        assert abs(int(self.DEFAULT_INTERVAL) - duration) <= epsilon

@@ -102,6 +102,7 @@ class TestBase(object):
         """
         # Wait the given interval
         interval = self.DEFAULT_INTERVAL if interval is None else interval
+        interval += 0.5
         time.sleep(interval)
 
         # Call the callback

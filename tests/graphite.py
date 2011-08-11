@@ -39,4 +39,4 @@ class GraphiteHandler(SocketServer.StreamRequestHandler):
                 break
 
             self.server.messages.append(line.rstrip("\n"))
-            self.server.last_receive = int(time.time())
+            self.server.last_receive = time.time()
