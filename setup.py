@@ -39,6 +39,9 @@ setup(name='statsite',
       keywords=['statsite', 'graphite', 'graph', 'metrics'],
       packages=['statsite'],
       cmdclass={ 'test': PyTest },
+      entry_points={
+        "console_scripts": ["statsite = statsite.bin.statsite:main"]
+      },
       classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: System Administrators",

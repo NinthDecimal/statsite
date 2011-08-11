@@ -5,6 +5,7 @@ Contains the basic classes for test classes.
 import errno
 import random
 import socket
+import tempfile
 import time
 import threading
 
@@ -94,6 +95,9 @@ class TestBase(object):
         request.addfinalizer(lambda: server.shutdown())
 
         return server
+
+    def pytest_funcarg__tempfile(self, request):
+        return tempfile.NamedTemporaryFile()
 
     def after_flush_interval(self, callback, interval=None):
         """
