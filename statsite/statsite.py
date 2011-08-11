@@ -75,8 +75,8 @@ class Statsite(threading.Thread):
         This is the callback called every flush interval, and is responsible
         for initiating the aggregator flush.
         """
-        self._flush_and_switch_aggregator()
         self._reset_timer()
+        self._flush_and_switch_aggregator()
 
     def _flush_and_switch_aggregator(self):
         """
