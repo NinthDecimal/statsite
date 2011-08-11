@@ -51,7 +51,7 @@ class Aggregator(object):
 
         # Fold over the metrics
         data = []
-        now = int(time.time())
+        now = time.time()
         for cls,metrics in metrics_by_type.iteritems():
             data.extend(cls.fold(metrics, now))
 

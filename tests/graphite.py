@@ -4,6 +4,7 @@ Statsite is sending to Graphite.
 """
 
 import SocketServer
+import time
 
 class GraphiteServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     """
@@ -19,6 +20,7 @@ class GraphiteServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
         # Store the host/port data and messages for users of the server
         self.host, self.port = address
         self.messages = []
+        self.last_receive = None
 
 class GraphiteHandler(SocketServer.StreamRequestHandler):
     """
@@ -37,3 +39,4 @@ class GraphiteHandler(SocketServer.StreamRequestHandler):
                 break
 
             self.server.messages.append(line.rstrip("\n"))
+            self.server.last_receive = int(time.time())

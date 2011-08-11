@@ -55,7 +55,7 @@ class GraphiteStore(MetricsStore):
         - `metrics` : A list of (key,value,timestamp) tuples.
         """
         # Construct the output
-        data = "\n".join(["%s %s %s" % metric for metric in metrics]) + "\n"
+        data = "\n".join(["%s %s %d" % metric for metric in metrics]) + "\n"
 
         # Serialize writes to the socket
         self.sock_lock.acquire()
