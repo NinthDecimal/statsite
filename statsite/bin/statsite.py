@@ -7,6 +7,7 @@
 
 import ConfigParser
 from optparse import OptionParser
+from ..statsite import Statsite
 
 class StatsiteCommand(object):
     def __init__(self, args=None):
@@ -15,7 +16,7 @@ class StatsiteCommand(object):
         parser.add_option("-c", "--config", action="store", dest="config_file",
                           default=None, help="path to a configuration file")
         parser.add_option("-s", "--setting", action="append", dest="settings",
-                          default=[], help="set a setting")
+                          default=[], help="set a setting, e.g. collector.host=0.0.0.0")
         (self.options, _) = parser.parse_args(args)
 
         # Parse the settings from file, and then from the command line,
@@ -27,7 +28,11 @@ class StatsiteCommand(object):
         self._parse_settings_from_options()
 
     def start(self):
-        pass
+        """
+        Runs the statiste application.
+        """
+        stats = Statsite(self.settings)
+        stats.start()
 
     def _parse_settings_from_file(self, path):
         """
@@ -54,7 +59,17 @@ class StatsiteCommand(object):
         Adds settings to a specific section.
         """
         self.settings.setdefault(section, {})
-        self.settings[section][key] = value
+
+        # Split the key by "." characters and make sure
+        # that each character nests the dictionary further
+        current = self.settings[section]
+        parts = key.split(".")
+        for part in parts[:-1]:
+            current.setdefault(part, {})
+            current = current[part]
+
+        # Finally set the value onto the settings
+        current[parts[-1]] = value
 
 def main():
     "The main entrypoint for the statsite command line program."

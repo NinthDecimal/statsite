@@ -25,7 +25,7 @@ class MetricsStore(object):
         raise NotImplementedError("flush not implemented")
 
 class GraphiteStore(MetricsStore):
-    def __init__(self, host, port, attempts=3):
+    def __init__(self, host="localhost", port=2003, attempts=3):
         """
         Implements a metrics store interface that allows metrics to
         be persisted to Graphite. Raises a :class:`ValueError` on bad arguments.
