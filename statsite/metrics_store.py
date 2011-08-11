@@ -83,7 +83,7 @@ class GraphiteStore(MetricsStore):
         """Tries to write a string to the socket, reconnecting on any errors"""
         for attempt in xrange(self.attempts):
             try:
-                self.sock.send(metric)
+                self.sock.sendall(metric)
                 break
             except socket.error:
                 self.logger.exception("Failed to flush to Graphite!")
