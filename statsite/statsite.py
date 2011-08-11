@@ -2,13 +2,28 @@
 Contains the main Statsite class which is what should be instantiated
 for running a server.
 """
+import logging
+import pprint
 import threading
 
+from . import __version__
 from aggregator import DefaultAggregator
 from collector import UDPCollector
 from metrics_store import GraphiteStore
 
-class Statsite(threading.Thread):
+BANNER = """
+Statsite v%(version)s
+
+[components]
+  . collector: %(collector_cls)s
+  . aggregator: %(aggregator_cls)s
+  . store:      %(store_cls)s
+
+[configuration]
+%(configuration)s
+"""
+
+class Statsite(object):
     """
     Statsite is the main entrypoint class for instantiating, configuring,
     and running a Statsite server.
@@ -34,15 +49,28 @@ class Statsite(threading.Thread):
         self.aggregator_cls = aggregator_cls
         self.settings = dict(self.DEFAULT_SETTINGS.items() + settings.items())
 
+        # Setup the logger
+        self.logger = logging.getLogger("statsite.statsite")
+        self.logger.info(BANNER % {
+                "version": __version__,
+                "collector_cls": collector_cls,
+                "aggregator_cls": aggregator_cls,
+                "store_cls": store_cls,
+                "configuration": pprint.pformat(self.settings, width=60, indent=2)
+        })
+
         # Setup the store
+        self.logger.debug("Initializing metrics store: %s" % store_cls)
         self.store = store_cls(**self.settings["store"])
 
         # Setup the aggregator, provide the store
         self.settings["aggregator"]["metrics_store"] = self.store
+        self.logger.debug("Initializing aggregator: %s" % aggregator_cls)
         self.aggregator = self._create_aggregator()
 
         # Setup the collector, provide the aggregator
         self.settings["collector"]["aggregator"] = self.aggregator
+        self.logger.debug("Initializing collector: %s" % collector_cls)
         self.collector =  collector_cls(**self.settings["collector"])
 
         # Setup the timer default
@@ -53,6 +81,7 @@ class Statsite(threading.Thread):
         This starts the actual statsite server. This will run in a
         separate thread and return immediately.
         """
+        self.logger.info("Statsite starting")
         self._reset_timer()
         self.collector.start()
 
@@ -65,6 +94,7 @@ class Statsite(threading.Thread):
         period, rather than immediately flushing it, since this can cause
         inaccurate statistics.
         """
+        self.logger.info("Statsite shutting down")
         if self.timer:
             self.timer.cancel()
 

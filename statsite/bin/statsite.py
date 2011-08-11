@@ -5,6 +5,9 @@
 
 """
 
+import logging
+import logging.handlers
+import sys
 import ConfigParser
 from optparse import OptionParser
 from ..statsite import Statsite
@@ -15,9 +18,19 @@ class StatsiteCommand(object):
         parser = OptionParser()
         parser.add_option("-c", "--config", action="store", dest="config_file",
                           default=None, help="path to a configuration file")
+        parser.add_option("-l", "--log-level", action="store", dest="log_level",
+                          default="INFO", help="log level")
         parser.add_option("-s", "--setting", action="append", dest="settings",
                           default=[], help="set a setting, e.g. collector.host=0.0.0.0")
         (self.options, _) = parser.parse_args(args)
+
+        # Setup the logger
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s:%(name)s:%(lineno)s %(message)s"))
+
+        logger = logging.getLogger("statsite")
+        logger.addHandler(handler)
+        logger.setLevel(getattr(logging, self.options.log_level.upper()))
 
         # Parse the settings from file, and then from the command line,
         # since the command line trumps any file-based settings

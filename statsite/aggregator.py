@@ -62,7 +62,7 @@ class DefaultAggregator(Aggregator):
         super(DefaultAggregator, self).__init__(*args, **kwargs)
 
         self.metrics_queue = []
-        self.logger = logging.getLogger("statsite.aggregator")
+        self.logger = logging.getLogger("statsite.aggregator.default")
 
     def add_metrics(self, metrics):
         self.metrics_queue.extend(metrics)
