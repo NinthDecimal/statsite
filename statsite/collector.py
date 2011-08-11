@@ -88,10 +88,12 @@ class UDPCollector(Collector):
 
     def start(self):
         # Run the main server forever, blocking this thread
+        self.logger.debug("UDPCollector starting")
         self.server.serve_forever()
 
     def shutdown(self):
         # Tell the main server to stop
+        self.logger.debug("UDPCollector shutting down")
         self.server.shutdown()
 
 class UDPCollectorSocketServer(SocketServer.UDPServer):

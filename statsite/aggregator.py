@@ -70,6 +70,10 @@ class DefaultAggregator(Aggregator):
     def flush(self):
         self.logger.info("Aggregating data...")
 
+        if self.logger.isEnabledFor(logging.DEBUG):
+            for metric in self.metrics_queue:
+                self.logger.debug("Metric: %s" % repr(metric))
+
         try:
             data = self._fold_metrics(self.metrics_queue)
         except:

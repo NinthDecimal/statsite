@@ -113,6 +113,8 @@ class Statsite(object):
         This is called periodically to flush the aggregator and switch
         the collector to a new aggregator.
         """
+        self.logger.debug("Flushing and switching aggregator...")
+
         # Create a new aggregator and tell the collection to begin using
         # it immediately.
         old_aggregator = self.aggregator
