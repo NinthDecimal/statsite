@@ -14,6 +14,13 @@ class Statsite(threading.Thread):
     and running a Statsite server.
     """
 
+    DEFAULT_SETTINGS = {
+        "flush_interval": 10,
+        "aggregator": {},
+        "collector": {},
+        "store": {}
+    }
+
     def __init__(self, settings={}, collector_cls=UDPCollector, aggregator_cls=DefaultAggregator,
                  store_cls=GraphiteStore):
         """
@@ -25,25 +32,18 @@ class Statsite(threading.Thread):
 
         # Store the classes and settings
         self.aggregator_cls = aggregator_cls
-        self.settings = settings
-
-        # TODO: DEFAULT SETTINGS
-
-        # Setup some basic defaults
-        settings.setdefault("aggregator", {})
-        settings.setdefault("collector", {})
-        settings.setdefault("store", {})
+        self.settings = dict(self.DEFAULT_SETTINGS.items() + settings.items())
 
         # Setup the store
-        self.store = store_cls(**settings["store"])
+        self.store = store_cls(**self.settings["store"])
 
         # Setup the aggregator, provide the store
-        settings["aggregator"]["metrics_store"] = self.store
+        self.settings["aggregator"]["metrics_store"] = self.store
         self.aggregator = self._create_aggregator()
 
         # Setup the collector, provide the aggregator
-        settings["collector"]["aggregator"] = self.aggregator
-        self.collector =  collector_cls(**settings["collector"])
+        self.settings["collector"]["aggregator"] = self.aggregator
+        self.collector =  collector_cls(**self.settings["collector"])
 
         # Setup the timer default
         self.timer = None
