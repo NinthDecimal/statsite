@@ -4,14 +4,16 @@ Statsite: simply collecting key/value pairs.
 """
 
 import time
-from tests.base import IntegrationBase
+from tests.base import TestBase
 
-class TestBasic(IntegrationBase):
-    def test_single_key_value(self, client, graphite):
+class TestBasic(TestBase):
+    def test_single_key_value(self, servers):
         """
         Tests that basic key/value pairs are successfully flushed
         to Graphite.
         """
+        client, graphite = servers
+
         key = "answer"
         value = 42
         timestamp = int(time.time())
@@ -23,12 +25,14 @@ class TestBasic(IntegrationBase):
         client.send("%s:%s|kv|@%d" % (key, value, timestamp))
         self.after_flush_interval(check)
 
-    def test_multiple_key_value(self, client, graphite):
+    def test_multiple_key_value(self, servers):
         """
         Tests that multiple basic key/value pairs can be send to
         Statsite, and that they will all be flushed during the flush
         interval.
         """
+        client, graphite = servers
+
         messages = [("answer", 42, int(time.time())),
                     ("another", 84, int(time.time()) - 5)]
 

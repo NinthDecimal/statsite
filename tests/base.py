@@ -7,6 +7,9 @@ import random
 import socket
 import time
 import threading
+
+from statsite.statsite import Statsite
+
 from graphite import GraphiteServer, GraphiteHandler
 from helpers import DumbAggregator, DumbMetricsStore
 
@@ -22,7 +25,7 @@ class TestBase(object):
         """
         This creates a fake aggregator instance and returns it.
         """
-        return DumbAggregator(self.pytest_funcarg__metrics_store(request))
+        return DumbAggregator(request.getfuncargvalue("metrics_store"))
 
     def pytest_funcarg__metrics_store(self, request):
         """
@@ -30,21 +33,39 @@ class TestBase(object):
         """
         return DumbMetricsStore()
 
-    def pytest_funcarg__client(self, request):
+    def pytest_funcarg__servers(self, request):
         """
         This creates a pytest funcarg for a client to a running Statsite
         server.
         """
-        host = "localhost"
-        port = 12000
+        # Instantiate a graphite server
+        graphite = request.getfuncargvalue("graphite")
 
-        # TODO: Instantiate server
+        # Instantiate server
+        settings = {
+            "flush_interval": self.DEFAULT_INTERVAL,
+            "collector": {
+                "host": "localhost",
+                "port": graphite.port + 1
+             },
+            "store": {
+                "host": "localhost",
+                "port": graphite.port
+             }
+        }
+
+        server = Statsite(settings)
+        thread = threading.Thread(target=server.start)
+        thread.start()
+
+        # Add a finalizer to make sure the server is properly shutdown
+        request.addfinalizer(lambda: server.shutdown())
 
         # Create the UDP client connected to the statsite server
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        client.connect((host, port))
+        client.connect((settings["collector"]["host"], settings["collector"]["port"]))
 
-        return client
+        return (client, graphite)
 
     def pytest_funcarg__graphite(self, request):
         """

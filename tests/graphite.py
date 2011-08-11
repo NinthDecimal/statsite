@@ -36,4 +36,4 @@ class GraphiteHandler(SocketServer.StreamRequestHandler):
             if not line:
                 break
 
-            self.server.messages.append(line)
+            self.server.messages.append(line.rstrip("\n"))

@@ -23,7 +23,7 @@ class Collector(object):
         """
         self.aggregator = aggregator
 
-    def run(self):
+    def start(self):
         """
         This method must be implemented by collectors, and is called
         when the collector should be started. This method should block
@@ -81,10 +81,12 @@ class UDPCollector(Collector):
     def __init__(self, host, port, **kwargs):
         super(UDPCollector, self).__init__(**kwargs)
 
-        self.server = UDPCollectorSocketServer((host, port), UDPCollectorSocketHandler)
+        self.server = UDPCollectorSocketServer((host, port),
+                                               UDPCollectorSocketHandler,
+                                               collector=self)
         self.logger = logging.getLogger("statsite.udpcollector")
 
-    def run(self):
+    def start(self):
         # Run the main server forever, blocking this thread
         self.server.serve_forever()
 

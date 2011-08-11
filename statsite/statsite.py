@@ -27,6 +27,8 @@ class Statsite(threading.Thread):
         self.aggregator_cls = aggregator_cls
         self.settings = settings
 
+        # TODO: DEFAULT SETTINGS
+
         # Setup some basic defaults
         settings.setdefault("aggregator", {})
         settings.setdefault("collector", {})
@@ -46,13 +48,13 @@ class Statsite(threading.Thread):
         # Setup the timer default
         self.timer = None
 
-    def run(self):
+    def start(self):
         """
         This starts the actual statsite server. This will run in a
         separate thread and return immediately.
         """
         self._reset_timer()
-        self.collector.serve_forever()
+        self.collector.start()
 
     def shutdown(self):
         """
@@ -63,6 +65,9 @@ class Statsite(threading.Thread):
         period, rather than immediately flushing it, since this can cause
         inaccurate statistics.
         """
+        if self.timer:
+            self.timer.cancel()
+
         self.collector.shutdown()
 
     def _on_timer(self):
@@ -101,5 +106,5 @@ class Statsite(threading.Thread):
         if self.timer:
             self.timer.cancel()
 
-        self.timer = Timer(int(self.settings["flush_interval"]), self._on_timer)
+        self.timer = threading.Timer(int(self.settings["flush_interval"]), self._on_timer)
         self.timer.start()

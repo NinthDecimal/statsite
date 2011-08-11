@@ -30,7 +30,7 @@ class TestGraphiteStore(TestBase):
         # Check that we get the proper results after a specific
         # flush interval to give the test time to send the data
         def check():
-            metric_strings = ["%s %s %s\n" % metric for metric in metrics]
+            metric_strings = ["%s %s %s" % metric for metric in metrics]
             assert metric_strings == graphite.messages
 
         self.after_flush_interval(check, interval=1)
