@@ -1,4 +1,5 @@
 from setuptools import setup, Command
+import statsite
 
 class PyTest(Command):
     """
@@ -28,7 +29,7 @@ except:
     readme_content = ""
 
 setup(name='statsite',
-      version='0.1.0-dev',
+      version=statsite.__version__,
       description='Python statistics server which sends data to Graphite.',
       long_description=readme_content,
       author='Kiip',
