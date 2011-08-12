@@ -15,6 +15,12 @@ from optparse import OptionParser
 from ..statsite import Statsite
 
 class StatsiteCommand(object):
+    TOPLEVEL_CONFIG_SECTION = "statsite"
+    """
+    This is the section to use in the configuration file if you wish to
+    modify the top-level configuration.
+    """
+
     def __init__(self, args=None):
         # Define and parse the command line options
         parser = OptionParser()
@@ -79,7 +85,7 @@ class StatsiteCommand(object):
         config.read(path)
 
         for section in config.sections():
-            settings_section = section if section != "statsite" else None
+            settings_section = section if section != self.TOPLEVEL_CONFIG_SECTION else None
             for (key, value) in config.items(section):
                 self._add_setting(settings_section, key, value)
 
