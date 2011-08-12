@@ -50,7 +50,12 @@ class StatsiteCommand(object):
         """
         signal.signal(signal.SIGINT, self._on_sigint)
         self.statsite = Statsite(self.settings)
-        self.statsite.start()
+
+        # Run Statsite in a separate thread so that signal handlers can
+        # properly shut it down.
+        thread = threading.Thread(target=self.statsite.start)
+        thread.start()
+        thread.join()
 
     def _on_sigint(self, signal, frame):
         """
