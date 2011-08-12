@@ -63,7 +63,7 @@ class Timer(Metric):
     Represents timing metrics, provided by the 'ms' type.
     """
     @classmethod
-    def fold(cls, lst, now):
+    def fold(cls, lst, now, percentile=90):
         accumulator = {}
         for item in lst: item._fold(accumulator)
 
@@ -80,16 +80,15 @@ class Timer(Metric):
             val_stdev = cls._stdev(vals, val_avg)
 
             # Calculate the inner percentile
-            percentile = 90
             inner_indexes = int(len(vals) * (percentile / 100.0))
             lower_idx = (len(vals) - inner_indexes) / 2
             upper_idx = lower_idx + inner_indexes
 
-            val_sum_pct = sum(vals[lower_idx:upper_idx])
-            val_avg_pct = val_sum_pct / inner_indexes
+            val_sum_pct = sum(vals[lower_idx:upper_idx+1])
+            val_avg_pct = val_sum_pct / inner_indexes if inner_indexes > 0 else val_sum_pct
             val_min_pct = vals[lower_idx]
             val_max_pct = vals[upper_idx]
-            val_stdev_pct = cls._stdev(vals[lower_idx:upper_idx], val_avg_pct)
+            val_stdev_pct = cls._stdev(vals[lower_idx:upper_idx+1], val_avg_pct)
 
             outputs.append(("timers.%s.sum" % key, val_sum, now))
             outputs.append(("timers.%s.mean" % key, val_avg, now))

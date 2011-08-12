@@ -5,9 +5,10 @@ aggregate and then submit to Graphite.
 """
 import logging
 import time
+import metrics
 
 class Aggregator(object):
-    def __init__(self, metrics_store):
+    def __init__(self, metrics_store, metrics_settings={}):
         """
         An aggregator accumulates metrics via the :meth:`add_metrics()` call
         until :meth:`flush()` is called. Flushing will be initiated in a new
@@ -22,6 +23,7 @@ class Aggregator(object):
             - `metrics_store`: The metrics storage instance to flush to.
         """
         self.metrics_store = metrics_store
+        self.metrics_settings = self._load_metric_settings(metrics_settings)
 
     def add_metrics(self, metrics):
         """
@@ -36,6 +38,27 @@ class Aggregator(object):
         for flushing the collected metrics to the metrics store.
         """
         raise NotImplementedError()
+
+    def _load_metric_settings(self, settings):
+        """
+        This method takes a list of settings set by the Statsite program,
+        in the format of a dictionary keyed by the shorthand for the metric,
+        example:
+
+            { "ms": { "percentile": 80 } }
+
+        And it turns it into a fast lookup based on the class that that
+        setting actually represents:
+
+            { Timer: { "percentile": 80 } }
+
+        This format is much more efficient for ``_fold_metrics``.
+        """
+        result = {}
+        for metric_type,metric_settings in settings.iteritems():
+            result[metrics.METRIC_TYPES[metric_type]] = metric_settings
+
+        return result
 
     def _fold_metrics(self, metrics):
         """
@@ -53,7 +76,7 @@ class Aggregator(object):
         data = []
         now = time.time()
         for cls,metrics in metrics_by_type.iteritems():
-            data.extend(cls.fold(metrics, now))
+            data.extend(cls.fold(metrics, now, **self.metrics_settings.get(cls, {})))
 
         return data
 

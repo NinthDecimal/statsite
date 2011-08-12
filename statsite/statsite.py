@@ -33,7 +33,8 @@ class Statsite(object):
         "flush_interval": 10,
         "aggregator": {},
         "collector": {},
-        "store": {}
+        "store": {},
+        "metrics": {}
     }
 
     def __init__(self, settings={}, collector_cls=UDPCollector, aggregator_cls=DefaultAggregator,
@@ -129,7 +130,7 @@ class Statsite(object):
         """
         Returns a new aggregator with the settings given at initialization.
         """
-        return self.aggregator_cls(**self.settings["aggregator"])
+        return self.aggregator_cls(metrics_settings=self.settings["metrics"], **self.settings["aggregator"])
 
     def _reset_timer(self):
         """

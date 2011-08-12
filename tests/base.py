@@ -26,7 +26,7 @@ class TestBase(object):
         """
         This creates a fake aggregator instance and returns it.
         """
-        return DumbAggregator(request.getfuncargvalue("metrics_store"))
+        return DumbAggregator(request.getfuncargvalue("metrics_store"), metrics_settings={})
 
     def pytest_funcarg__metrics_store(self, request):
         """

@@ -6,7 +6,7 @@ as the default aggregator class.
 import time
 from tests.base import TestBase
 from statsite.aggregator import Aggregator, DefaultAggregator
-from statsite.metrics import Counter, KeyValue
+from statsite.metrics import Counter, KeyValue, Timer
 
 class TestAggregator(TestBase):
     def test_fold_metrics_works(self, monkeypatch):
@@ -20,6 +20,20 @@ class TestAggregator(TestBase):
 
         assert 1 == result.count(("k", 1, now))
         assert 1 == result.count(("counts.j", 2, now))
+
+    def test_fold_metrics_passes_metric_settings(self, monkeypatch):
+        """
+        Tests that aggregators pass the proper metric settings when
+        folding over.
+        """
+        now = 12
+        settings = { "ms": { "percentile": 80 } }
+        metrics  = [Timer("k", 20, now)]
+
+        monkeypatch.setattr(time, 'time', lambda: now)
+        result = Aggregator(None, metrics_settings=settings)._fold_metrics(metrics)
+        print repr(result)
+        assert 1 == result.count(("timers.k.sum_80", 20, now))
 
 class TestDefaultAggregator(TestBase):
     def test_flushes_collected_metrics(self, metrics_store):
