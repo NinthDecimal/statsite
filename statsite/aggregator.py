@@ -68,9 +68,9 @@ class DefaultAggregator(Aggregator):
         self.metrics_queue.extend(metrics)
 
     def flush(self):
-        self.logger.info("Aggregating data...")
-
         if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug("Aggregating data...")
+
             for metric in self.metrics_queue:
                 self.logger.debug("Metric: %s" % repr(metric))
 
@@ -85,4 +85,4 @@ class DefaultAggregator(Aggregator):
         except:
             self.logger.exception("Failed to flush data")
 
-        self.logger.info("Aggregation complete.")
+        self.logger.debug("Aggregation complete.")

@@ -55,3 +55,10 @@ class TestParser(object):
                     ("j", 2, "kv", None)]
 
         assert expected == p.parse_message(message)
+
+    def test_succeeds_with_trailing_newlines(self):
+        """
+        Tests that trailing newlines do not cause problems parsing.
+        """
+        message = "k:1|ms\n"
+        assert [("k", 1, "ms", None)] == p.parse_message(message)

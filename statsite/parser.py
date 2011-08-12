@@ -20,7 +20,7 @@ def parse_message(message):
     Returns a list of :class:`Metric` objects.
     """
     lines = message.split("\n")
-    return [parse_line(line) for line in lines]
+    return [parse_line(line) for line in lines if len(line) > 0]
 
 def parse_line(line):
     """
