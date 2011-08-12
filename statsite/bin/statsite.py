@@ -7,6 +7,7 @@
 
 import logging
 import logging.handlers
+import signal
 import sys
 import ConfigParser
 from optparse import OptionParser
@@ -23,6 +24,9 @@ class StatsiteCommand(object):
         parser.add_option("-s", "--setting", action="append", dest="settings",
                           default=[], help="set a setting, e.g. collector.host=0.0.0.0")
         (self.options, _) = parser.parse_args(args)
+
+        # Defaults
+        self.statsite = None
 
         # Setup the logger
         handler = logging.StreamHandler(sys.stdout)
@@ -44,8 +48,16 @@ class StatsiteCommand(object):
         """
         Runs the statiste application.
         """
-        stats = Statsite(self.settings)
-        stats.start()
+        signal.signal(signal.SIGINT, self._on_sigint)
+        self.statsite = Statsite(self.settings)
+        self.statsite.start()
+
+    def _on_sigint(self, signal, frame):
+        """
+        Called when a SIGINT is sent to cleanly shutdown the statsite server.
+        """
+        if self.statsite:
+            self.statsite.shutdown()
 
     def _parse_settings_from_file(self, path):
         """
