@@ -1,4 +1,4 @@
-from setuptools import setup, Command
+from setuptools import find_packages, setup, Command
 import statsite
 
 class PyTest(Command):
@@ -38,7 +38,7 @@ setup(name='statsite',
       maintainer_email='biz@kiip.me',
       url='https://github.com/kiip/statsite',
       keywords=['statsite', 'graphite', 'graph', 'metrics'],
-      packages=['statsite'],
+      packages=find_packages(exclude=["tests", "tests.*"]),
       cmdclass={ 'test': PyTest },
       entry_points={
         "console_scripts": ["statsite = statsite.bin.statsite:main"]
