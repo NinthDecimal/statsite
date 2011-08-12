@@ -34,7 +34,6 @@ def parse_line(line):
     match = LINE_REGEX.match(line)
     if match is None:
         raise ValueError, "Invalid line: '%s'" % line
-        return
 
     key, value, metric_type, flag = match.groups()
 
