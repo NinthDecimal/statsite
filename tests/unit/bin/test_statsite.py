@@ -6,6 +6,20 @@ from tests.base import TestBase
 from statsite.bin.statsite import StatsiteCommand
 
 class TestStatsiteBin(TestBase):
+    def test_parse_top_level_settings_from_file(self, tempfile):
+        """
+        Tests that the statsite command can properly read top-level
+        settings from a configuration file.
+        """
+        tempfile.write("""
+[statsite]
+flush_interval=20
+""")
+        tempfile.flush()
+
+        command = StatsiteCommand(["-c", tempfile.name])
+        assert "20" == command.settings["flush_interval"]
+
     def test_parse_settings_from_file(self, tempfile):
         """
         Tests that the statsite command can properly read settings

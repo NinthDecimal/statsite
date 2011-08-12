@@ -79,8 +79,9 @@ class StatsiteCommand(object):
         config.read(path)
 
         for section in config.sections():
+            settings_section = section if section != "statsite" else None
             for (key, value) in config.items(section):
-                self._add_setting(section, key, value)
+                self._add_setting(settings_section, key, value)
 
     def _parse_settings_from_options(self):
         """
@@ -95,18 +96,27 @@ class StatsiteCommand(object):
         """
         Adds settings to a specific section.
         """
-        self.settings.setdefault(section, {})
+        if section is None:
+            # If section is 'None' then we put the key/value
+            # in the top-level settings
+            current = self.settings
+        else:
+            # Otherwise we put it in the proper section...
+            self.settings.setdefault(section, {})
 
-        # Split the key by "." characters and make sure
-        # that each character nests the dictionary further
-        current = self.settings[section]
-        parts = key.split(".")
-        for part in parts[:-1]:
-            current.setdefault(part, {})
-            current = current[part]
+            # Split the key by "." characters and make sure
+            # that each character nests the dictionary further
+            current = self.settings[section]
+            parts = key.split(".")
+            for part in parts[:-1]:
+                current.setdefault(part, {})
+                current = current[part]
+
+            # The key is now the last of the dot-separated parts
+            key = parts[-1]
 
         # Finally set the value onto the settings
-        current[parts[-1]] = value
+        current[key] = value
 
 def main():
     "The main entrypoint for the statsite command line program."
