@@ -36,8 +36,9 @@ class GraphiteStore(MetricsStore):
             - `prefix` (optional) : A prefix to add to the keys. Defaults to 'statsite'
             - `attempts` (optional) : The number of re-connect retries before failing.
         """
-        if not isinstance(host, (str,unicode)): raise ValueError, "Host must be a string!"
-        if not isinstance(port, int): raise ValueError, "Port must be an integer!"
+        # Convert the port to an int since its coming from a configuration file
+        port = int(port)
+
         if port <= 0: raise ValueError, "Port must be positive!"
         if attempts <= 1: raise ValueError, "Must have at least 1 attempt!"
 

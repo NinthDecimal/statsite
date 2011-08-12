@@ -82,7 +82,7 @@ class UDPCollector(Collector):
     def __init__(self, host="0.0.0.0", port=8125, **kwargs):
         super(UDPCollector, self).__init__(**kwargs)
 
-        self.server = UDPCollectorSocketServer((host, port),
+        self.server = UDPCollectorSocketServer((host, int(port)),
                                                UDPCollectorSocketHandler,
                                                collector=self)
         self.logger = logging.getLogger("statsite.udpcollector")
