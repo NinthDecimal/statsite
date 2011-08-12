@@ -51,7 +51,8 @@ class TestBase(object):
              },
             "store": {
                 "host": "localhost",
-                "port": graphite.port
+                "port": graphite.port,
+                "prefix": "foobar"
              }
         }
 
@@ -66,7 +67,7 @@ class TestBase(object):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         client.connect((settings["collector"]["host"], settings["collector"]["port"]))
 
-        return (client, graphite)
+        return (client, server, graphite)
 
     def pytest_funcarg__graphite(self, request):
         """

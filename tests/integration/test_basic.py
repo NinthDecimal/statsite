@@ -12,14 +12,14 @@ class TestBasic(TestBase):
         Tests that basic key/value pairs are successfully flushed
         to Graphite.
         """
-        client, graphite = servers
+        client, server, graphite = servers
 
         key = "answer"
         value = 42
         timestamp = int(time.time())
 
         def check():
-            message = "%s %s %s" % (key, value, timestamp)
+            message = "%s.%s %s %s" % (server.settings["store"]["prefix"], key, value, timestamp)
             assert [message] == graphite.messages
 
         client.send("%s:%s|kv|@%d" % (key, value, timestamp))
@@ -31,14 +31,15 @@ class TestBasic(TestBase):
         Statsite, and that they will all be flushed during the flush
         interval.
         """
-        client, graphite = servers
+        client, server, graphite = servers
+        prefix = server.settings["store"]["prefix"]
 
         messages = [("answer", 42, int(time.time())),
                     ("another", 84, int(time.time()) - 5)]
 
         # The test method
         def check():
-            raw_messages = ["%s %s %s" % message for message in messages]
+            raw_messages = ["%s.%s %s %s" % (prefix,k,v,ts) for k,v,ts in messages]
             assert raw_messages == graphite.messages
 
         # Send all the messages
@@ -53,7 +54,8 @@ class TestBasic(TestBase):
         Tests that after the flush interval, the data is cleared and
         only new data is sent to the graphite server.
         """
-        client, graphite = servers
+        client, server, graphite = servers
+        prefix = server.settings["store"]["prefix"]
 
         messages = [("k", 1, int(time.time())), ("j", 2, int(time.time()))]
 
@@ -66,7 +68,7 @@ class TestBasic(TestBase):
 
         # Check the results after the flush interval
         def check():
-            raw_messages = ["%s %s %s" % message for message in messages]
+            raw_messages = ["%s.%s %s %s" % (prefix,k,v,ts) for k,v,ts in messages]
             assert raw_messages == graphite.messages
 
         self.after_flush_interval(check)
@@ -76,7 +78,7 @@ class TestBasic(TestBase):
         Tests that the data is flushed on the flush interval.
         """
         statsite_init_time = time.time()
-        client, graphite = servers
+        client, server, graphite = servers
 
         # Send some data to graphite and wait the flush interval
         client.send("k:1|kv")

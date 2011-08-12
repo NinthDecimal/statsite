@@ -19,7 +19,7 @@ class TestGraphiteStore(TestBase):
         """
         Tests that metrics are properly flushed to a graphite server.
         """
-        store = GraphiteStore(graphite.host, graphite.port)
+        store = GraphiteStore(graphite.host, graphite.port, prefix="foobar")
         metrics = [("k", 1, 10), ("j", 2, 20)]
 
         # Flush the metrics and verify that graphite sees the
@@ -30,7 +30,7 @@ class TestGraphiteStore(TestBase):
         # Check that we get the proper results after a specific
         # flush interval to give the test time to send the data
         def check():
-            metric_strings = ["%s %s %s" % metric for metric in metrics]
+            metric_strings = ["foobar.%s %s %s" % metric for metric in metrics]
             assert metric_strings == graphite.messages
 
         self.after_flush_interval(check, interval=1)

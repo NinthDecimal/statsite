@@ -25,7 +25,7 @@ class MetricsStore(object):
         raise NotImplementedError("flush not implemented")
 
 class GraphiteStore(MetricsStore):
-    def __init__(self, host="localhost", port=2003, attempts=3):
+    def __init__(self, host="localhost", port=2003, prefix="statsite", attempts=3):
         """
         Implements a metrics store interface that allows metrics to
         be persisted to Graphite. Raises a :class:`ValueError` on bad arguments.
@@ -33,6 +33,7 @@ class GraphiteStore(MetricsStore):
         :Parameters:
             - `host` : The hostname of the graphite server.
             - `port` : The port of the graphite server
+            - `prefix` (optional) : A prefix to add to the keys. Defaults to 'statsite'
             - `attempts` (optional) : The number of re-connect retries before failing.
         """
         if not isinstance(host, (str,unicode)): raise ValueError, "Host must be a string!"
@@ -42,6 +43,7 @@ class GraphiteStore(MetricsStore):
 
         self.host = host
         self.port = port
+        self.prefix = prefix
         self.attempts = attempts
         self.sock_lock = threading.Lock()
         self.sock = self._create_socket()
@@ -55,7 +57,7 @@ class GraphiteStore(MetricsStore):
         - `metrics` : A list of (key,value,timestamp) tuples.
         """
         # Construct the output
-        data = "\n".join(["%s %s %d" % metric for metric in metrics]) + "\n"
+        data = "\n".join(["%s.%s %s %d" % (self.prefix,k,v,ts) for k,v,ts in metrics]) + "\n"
 
         # Serialize writes to the socket
         self.sock_lock.acquire()
