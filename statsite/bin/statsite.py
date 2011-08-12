@@ -9,6 +9,7 @@ import logging
 import logging.handlers
 import signal
 import sys
+import threading
 import ConfigParser
 from optparse import OptionParser
 from ..statsite import Statsite
@@ -54,8 +55,14 @@ class StatsiteCommand(object):
         # Run Statsite in a separate thread so that signal handlers can
         # properly shut it down.
         thread = threading.Thread(target=self.statsite.start)
+        thread.daemon = True
         thread.start()
-        thread.join()
+
+        # Apparently `thread.join` blocks the main thread and makes it
+        # _uninterruptable_, so we need to do this loop so that the main
+        # thread can respond to signal handlers.
+        while thread.isAlive():
+            thread.join(0.2)
 
     def _on_sigint(self, signal, frame):
         """
