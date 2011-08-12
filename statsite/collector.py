@@ -21,6 +21,7 @@ class Collector(object):
         parameters if they want, but they _must_ call the superclass
         init method.
         """
+        self.logger = logging.getLogger("statsite.collector")
         self.aggregator = aggregator
 
     def start(self):
@@ -60,7 +61,7 @@ class Collector(object):
                 metric = metrics.METRIC_TYPES[metric_type](key, value, flag)
                 results.append(metric)
             else:
-                # TODO: Log here?
+                self.logger.error("Invalid metric: %s" % message)
                 if not ignore_errors:
                     raise ValueError("Invalid metric received")
 
