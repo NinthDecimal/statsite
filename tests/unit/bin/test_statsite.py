@@ -6,6 +6,13 @@ from tests.base import TestBase
 from statsite.bin.statsite import StatsiteCommand
 
 class TestStatsiteBin(TestBase):
+    def test_has_default_log_level(self):
+        """
+        Tests that the log level by default is "info"
+        """
+        command = StatsiteCommand([])
+        assert "info" == command.settings["log_level"]
+
     def test_parse_top_level_settings_from_file(self, tempfile):
         """
         Tests that the statsite command can properly read top-level
@@ -14,11 +21,13 @@ class TestStatsiteBin(TestBase):
         tempfile.write("""
 [statsite]
 flush_interval=20
+log_level=error
 """)
         tempfile.flush()
 
         command = StatsiteCommand(["-c", tempfile.name])
         assert "20" == command.settings["flush_interval"]
+        assert "error" == command.settings["log_level"]
 
     def test_parse_settings_from_file(self, tempfile):
         """
