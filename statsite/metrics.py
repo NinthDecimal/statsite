@@ -41,6 +41,15 @@ class Metric(object):
         """
         return [(o.key,o.value,o.flag if o.flag else now) for o in lst]
 
+    def __eq__(self, other):
+        """
+        Equality check for metrics. This does a basic check to make sure
+        key, value, and flag are equivalent.
+        """
+        return isinstance(other, Metric) and \
+            self.key == other.key and \
+            self.value == other.value and \
+            self.flag == other.flag
 
 class Counter(Metric):
     """

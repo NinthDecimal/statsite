@@ -9,19 +9,6 @@ LINE_REGEX = re.compile("^([a-zA-Z0-9-_.]+):(-?[0-9.]+)\|([a-z]+)(?:\|@([0-9.]+)
 Simple Regex used to match stats lines inside incoming messages.
 """
 
-def parse_message(message):
-    """
-    Utility function to parse incoming messages.
-    Splits on newlines and parses each line.
-
-    Raises :exc:`ValueError` if any of the lines in
-    the message are invalid.
-
-    Returns a list of :class:`Metric` objects.
-    """
-    lines = message.split("\n")
-    return [parse_line(line) for line in lines if len(line) > 0]
-
 def parse_line(line):
     """
     Utility function to parse an incoming line in a message.

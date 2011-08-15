@@ -26,24 +26,33 @@ class TestCollector(TestBase):
         assert isinstance(results[0], KeyValue)
         assert isinstance(results[1], Timer)
 
-    def test_parse_metrics_errors(self):
-        """
-        Tests that parsing metrics will throw an exception if any
-        of the metrics are invalid.
-        """
-        message = "k:1|nope"
-
-        with pytest.raises(ValueError):
-            Collector(None).parse_metrics(message)
-
     def test_parse_metrics_suppress_error(self):
         """
         Tests that parsing metrics will suppress errors if requested.
         """
         message = "k:1|nope"
-        results = Collector(None).parse_metrics(message, ignore_errors=True)
+        results = Collector(None).parse_metrics(message)
 
         assert 0 == len(results)
+
+    def test_parse_metrics_keeps_good_metrics(self, aggregator):
+        """
+        Tests that parse_metrics will keep the good metrics in the face
+        of an error.
+        """
+        message = "\n".join(["k::1|c",
+                             "j:2|nope",
+                             "k:2|ms"])
+        results = Collector(aggregator).parse_metrics(message)
+
+        assert [Timer("k", 2)] == results
+
+    def test_parse_metrics_ignores_blank_lines(self, aggregator):
+        """
+        Tests that parse_metrics will properly ignore blank lines.
+        """
+        message = "\n".join(["", "k:2|ms"])
+        assert [Timer("k", 2)] == Collector(aggregator).parse_metrics(message)
 
     def test_add_metrics(self, aggregator):
         """

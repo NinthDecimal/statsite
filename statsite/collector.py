@@ -46,7 +46,7 @@ class Collector(object):
         """
         self.aggregator = aggregator
 
-    def parse_metrics(self, message, ignore_errors=False):
+    def parse_metrics(self, message):
         """
         Given a raw message of metrics split by newline characters, this will
         parse the metrics and return an array of metric objects.
@@ -55,15 +55,25 @@ class Collector(object):
         ``ignore_errors`` is set to True.
         """
         results = []
-        for (key, value, metric_type, flag) in parser.parse_message(message):
+        for line in message.split("\n"):
+            # If the line is blank, we ignore it
+            if len(line) == 0: continue
+
+            # Parse the line, and skip it if its invalid
+            try:
+                (key, value, metric_type, flag) = parser.parse_line(line)
+            except ValueError:
+                self.logger.error("Invalid line syntax: %s" % line)
+                continue
+
+            # Create the metric and store it in our results
             if metric_type in metrics.METRIC_TYPES:
                 # Create and store the metric object
                 metric = metrics.METRIC_TYPES[metric_type](key, value, flag)
                 results.append(metric)
             else:
-                self.logger.error("Invalid metric: %s" % message)
-                if not ignore_errors:
-                    raise ValueError("Invalid metric received")
+                # Ignore the bad invalid metric, but log it
+                self.logger.error("Invalid metric '%s' in line: %s" % (metric_type, line))
 
         return results
 
@@ -121,5 +131,5 @@ class UDPCollectorSocketHandler(SocketServer.BaseRequestHandler):
         message, _ = self.request
 
         # Add the parsed metrics to the aggregator
-        metrics = self.server.collector.parse_metrics(message, ignore_errors=True)
+        metrics = self.server.collector.parse_metrics(message)
         self.server.collector.add_metrics(metrics)

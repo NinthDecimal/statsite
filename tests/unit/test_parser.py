@@ -45,27 +45,9 @@ class TestParser(object):
         with pytest.raises(ValueError):
             p.parse_line("k:27|ms|@-24")
 
-    def test_parse_multiple_lines(self):
-        """
-        Tests that multiple lines of messages can be parsed into an
-        array of tuples.
-        """
-        message  = "\n".join(["k:1|ms", "j:2|kv"])
-        expected = [("k", 1, "ms", None),
-                    ("j", 2, "kv", None)]
-
-        assert expected == p.parse_message(message)
-
-    def test_succeeds_with_trailing_newlines(self):
-        """
-        Tests that trailing newlines do not cause problems parsing.
-        """
-        message = "k:1|ms\n"
-        assert [("k", 1, "ms", None)] == p.parse_message(message)
-
     def test_parse_line_with_underscores(self):
         """
         Tests that this line can properly pass. This was found to
         fail at some point in production.
         """
-        p.parse_message("hosts.lucid64.bi.metrics.tasks.update_session_create_counts:6.330013|ms")
+        p.parse_line("hosts.lucid64.bi.metrics.tasks.update_session_create_counts:6.330013|ms")
