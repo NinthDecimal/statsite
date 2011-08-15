@@ -21,7 +21,7 @@ class TestCollector(TestBase):
         of proper metric objects.
         """
         message = "\n".join(["k:1|kv", "j:27|ms"])
-        results = Collector(None).parse_metrics(message)
+        results = Collector(None)._parse_metrics(message)
 
         assert isinstance(results[0], KeyValue)
         assert isinstance(results[1], Timer)
@@ -31,7 +31,7 @@ class TestCollector(TestBase):
         Tests that parsing metrics will suppress errors if requested.
         """
         message = "k:1|nope"
-        results = Collector(None).parse_metrics(message)
+        results = Collector(None)._parse_metrics(message)
 
         assert 0 == len(results)
 
@@ -43,7 +43,7 @@ class TestCollector(TestBase):
         message = "\n".join(["k::1|c",
                              "j:2|nope",
                              "k:2|ms"])
-        results = Collector(aggregator).parse_metrics(message)
+        results = Collector(aggregator)._parse_metrics(message)
 
         assert [Timer("k", 2)] == results
 
@@ -52,7 +52,7 @@ class TestCollector(TestBase):
         Tests that parse_metrics will properly ignore blank lines.
         """
         message = "\n".join(["", "k:2|ms"])
-        assert [Timer("k", 2)] == Collector(aggregator).parse_metrics(message)
+        assert [Timer("k", 2)] == Collector(aggregator)._parse_metrics(message)
 
     def test_add_metrics(self, aggregator):
         """
@@ -61,7 +61,7 @@ class TestCollector(TestBase):
         """
         now = 17
         metrics = [KeyValue("k", 1, now), Counter("j", 2)]
-        Collector(aggregator).add_metrics(metrics)
+        Collector(aggregator)._add_metrics(metrics)
 
         assert metrics == aggregator.metrics
 

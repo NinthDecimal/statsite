@@ -46,7 +46,7 @@ class Collector(object):
         """
         self.aggregator = aggregator
 
-    def parse_metrics(self, message):
+    def _parse_metrics(self, message):
         """
         Given a raw message of metrics split by newline characters, this will
         parse the metrics and return an array of metric objects.
@@ -77,7 +77,7 @@ class Collector(object):
 
         return results
 
-    def add_metrics(self, metrics):
+    def _add_metrics(self, metrics):
         """
         Adds the given array of metrics to the aggregator.
         """
@@ -131,5 +131,5 @@ class UDPCollectorSocketHandler(SocketServer.BaseRequestHandler):
         message, _ = self.request
 
         # Add the parsed metrics to the aggregator
-        metrics = self.server.collector.parse_metrics(message)
-        self.server.collector.add_metrics(metrics)
+        metrics = self.server.collector._parse_metrics(message)
+        self.server.collector._add_metrics(metrics)
