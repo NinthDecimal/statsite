@@ -127,9 +127,12 @@ class UDPCollectorSocketHandler(SocketServer.BaseRequestHandler):
     """
 
     def handle(self):
-        # Get the message
-        message, _ = self.request
+        try:
+            # Get the message
+            message, _ = self.request
 
-        # Add the parsed metrics to the aggregator
-        metrics = self.server.collector._parse_metrics(message)
-        self.server.collector._add_metrics(metrics)
+            # Add the parsed metrics to the aggregator
+            metrics = self.server.collector._parse_metrics(message)
+            self.server.collector._add_metrics(metrics)
+        except Exception, e:
+            self.server.collector.logger.exception("Exception during processing UDP packet")
