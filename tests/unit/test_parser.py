@@ -62,3 +62,10 @@ class TestParser(object):
         """
         message = "k:1|ms\n"
         assert [("k", 1, "ms", None)] == p.parse_message(message)
+
+    def test_parse_line_with_underscores(self):
+        """
+        Tests that this line can properly pass. This was found to
+        fail at some point in production.
+        """
+        p.parse_message("hosts.lucid64.bi.metrics.tasks.update_session_create_counts:6.330013|ms")

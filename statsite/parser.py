@@ -4,7 +4,7 @@ parsing incoming messages.
 """
 import re
 
-LINE_REGEX = re.compile("^([a-zA-Z0-9-.]+):(-?[0-9.]+)\|([a-z]+)(?:\|@([0-9.]+))?$")
+LINE_REGEX = re.compile("^([a-zA-Z0-9-_.]+):(-?[0-9.]+)\|([a-z]+)(?:\|@([0-9.]+))?$")
 """
 Simple Regex used to match stats lines inside incoming messages.
 """
