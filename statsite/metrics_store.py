@@ -87,7 +87,9 @@ class GraphiteStore(MetricsStore):
         for attempt in xrange(self.attempts):
             try:
                 self.sock.sendall(metric)
-                break
+                return
             except socket.error:
-                self.logger.exception("Failed to flush to Graphite!")
+                self.logger.exception("Error while flushing to graphite. Reattempting...")
                 self.sock = self._create_socket()
+
+        self.logger.critical("Failed to flush to Graphite! Gave up after %d attempts." % self.attempts)
