@@ -16,5 +16,5 @@ class AlivenessHandler(SocketServer.BaseRequestHandler):
     """
 
     def handle(self):
-        LOGGER.info("Aliveness check from: %s" % self.client_address[0])
+        LOGGER.debug("Aliveness check from: %s" % self.client_address[0])
         self.request.send("YES")
