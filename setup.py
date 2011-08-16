@@ -1,26 +1,5 @@
-from setuptools import find_packages, setup, Command
+from setuptools import find_packages, setup
 import statsite
-
-class PyTest(Command):
-    """
-    This builds a subcommand for setup.py which allows tests to be
-    run on the library without installing it. Tests can be run with:
-
-        python setup.py test
-
-    """
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import sys, subprocess
-        errno = subprocess.call([sys.executable, 'test.py', '-n', '4'])
-        raise SystemExit(errno)
 
 # Get the long description by reading the README
 try:
@@ -39,7 +18,6 @@ setup(name='statsite',
       url='https://github.com/kiip/statsite',
       keywords=['statsite', 'graphite', 'graph', 'metrics'],
       packages=find_packages(exclude=["tests", "tests.*"]),
-      cmdclass={ 'test': PyTest },
       entry_points={
         "console_scripts": ["statsite = statsite.bin.statsite:main"]
       },
