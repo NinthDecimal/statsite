@@ -20,10 +20,17 @@ class DumbAggregator(Aggregator):
         self.flushed = True
 
 class DumbCollector(Collector):
+    # Note that the host/port arguments are to avoid exceptions when
+    # setting the settings in the "servers" funcarg
+    def __init__(self, host=None, port=None, aggregator=None):
+        super(DumbCollector, self).__init__(aggregator)
+
     pass
 
 class DumbMetricsStore(MetricsStore):
-    def __init__(self):
+    # Note that the host/port arguments are to avoid exceptions when
+    # setting the settings in the "servers" funcarg
+    def __init__(self, host=None, port=None, prefix=None):
         self.data = []
 
     def flush(self, data):

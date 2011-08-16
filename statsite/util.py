@@ -3,6 +3,7 @@ Contains utility functions.
 """
 
 import collections
+import copy
 
 def quacks_like_dict(object):
     """Check if object is dict-like"""
@@ -20,7 +21,7 @@ def deep_merge(a, b):
     {'a': 1, 'b': {1: 1, 2: 7}, 'c': 3, 'd': {'z': [1, 2, 3]}}
     """
     assert quacks_like_dict(a), quacks_like_dict(b)
-    dst = a.copy()
+    dst = copy.deepcopy(a)
 
     stack = [(dst, b)]
     while stack:

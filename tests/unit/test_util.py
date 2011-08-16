@@ -17,3 +17,15 @@ class TestMerge(TestBase):
         expected = {'a': 1, 'b': {1: 1, 2: 7}, 'c': 3, 'd': {'z': [1, 2, 3]}}
 
         assert expected == result
+
+    def test_non_destructive(self):
+        """
+        Tests that the merging is non-destructive for the source
+        dictionary.
+        """
+        a = {'a': { 'b': False } }
+        b = {'a': { 'b': True } }
+        result = statsite.util.deep_merge(a, b)
+
+        # Assert that it was not changed
+        assert { 'a': { 'b': False } } == a
