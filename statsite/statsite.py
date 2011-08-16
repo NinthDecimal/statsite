@@ -135,6 +135,7 @@ class Statsite(object):
 
         # Run the aliveness check in a thread
         thread = threading.Thread(target=self.aliveness_check.serve_forever)
+        thread.daemon = True
         thread.start()
 
     def _disable_aliveness_check(self):
@@ -169,6 +170,7 @@ class Statsite(object):
 
         # Flush the old aggregator in it's own thread
         thread = threading.Thread(target=old_aggregator.flush)
+        thread.daemon = True
         thread.start()
 
     def _create_aggregator(self):
