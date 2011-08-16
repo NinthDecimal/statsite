@@ -82,12 +82,8 @@ class Statsite(object):
         self.logger.debug("Initializing collector: %s" % collector_cls)
         self.collector =  collector_cls(**self.settings["collector"])
 
-        # Setup the TCP aliveness check
+        # Setup defaults
         self.aliveness_check = None
-        if self.settings["aliveness_check"]["enabled"]:
-            self._enable_aliveness_check()
-
-        # Setup the timer default
         self.timer = None
 
     def start(self):
@@ -97,6 +93,10 @@ class Statsite(object):
         """
         self.logger.info("Statsite starting")
         self._reset_timer()
+
+        if self.settings["aliveness_check"]["enabled"]:
+            self._enable_aliveness_check()
+
         self.collector.start()
 
     def shutdown(self):
@@ -124,6 +124,8 @@ class Statsite(object):
         if self.aliveness_check:
             self.aliveness_check.shutdown()
 
+        self.logger.debug("Aliveness check starting")
+
         # Settings
         host = self.settings["aliveness_check"]["host"]
         port = int(self.settings["aliveness_check"]["port"])
@@ -139,6 +141,7 @@ class Statsite(object):
         """
         This shuts down the TCP aliveness check.
         """
+        self.logger.debug("Aliveness check stopping")
         if self.aliveness_check:
             self.aliveness_check.shutdown()
             self.aliveness_check = None
