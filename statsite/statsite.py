@@ -4,12 +4,15 @@ for running a server.
 """
 import logging
 import pprint
+import SocketServer
 import threading
 
 from . import __version__
 from aggregator import DefaultAggregator
+from aliveness import AlivenessHandler
 from collector import UDPCollector
 from metrics_store import GraphiteStore
+from util import deep_merge
 
 BANNER = """
 Statsite v%(version)s
@@ -32,6 +35,11 @@ class Statsite(object):
     DEFAULT_SETTINGS = {
         "flush_interval": 10,
         "aggregator": {},
+        "aliveness_check": {
+            "enabled": False,
+            "host": "0.0.0.0",
+            "port": 8325
+        },
         "collector": {},
         "store": {},
         "metrics": {}
@@ -48,7 +56,7 @@ class Statsite(object):
 
         # Store the classes and settings
         self.aggregator_cls = aggregator_cls
-        self.settings = dict(self.DEFAULT_SETTINGS.items() + settings.items())
+        self.settings = deep_merge(self.DEFAULT_SETTINGS, settings)
 
         # Setup the logger
         self.logger = logging.getLogger("statsite.statsite")
@@ -73,6 +81,11 @@ class Statsite(object):
         self.settings["collector"]["aggregator"] = self.aggregator
         self.logger.debug("Initializing collector: %s" % collector_cls)
         self.collector =  collector_cls(**self.settings["collector"])
+
+        # Setup the TCP aliveness check
+        self.aliveness_check = None
+        if self.settings["aliveness_check"]["enabled"]:
+            self._enable_aliveness_check()
 
         # Setup the timer default
         self.timer = None
@@ -99,7 +112,36 @@ class Statsite(object):
         if self.timer:
             self.timer.cancel()
 
+        self._disable_aliveness_check()
         self.collector.shutdown()
+
+    def _enable_aliveness_check(self):
+        """
+        This enables the TCP aliveness check, which is useful for tools
+        such as Monit, Nagios, etc. to verify that Statsite is still
+        alive.
+        """
+        if self.aliveness_check:
+            self.aliveness_check.shutdown()
+
+        # Settings
+        host = self.settings["aliveness_check"]["host"]
+        port = int(self.settings["aliveness_check"]["port"])
+
+        # Create the server
+        self.aliveness_check = SocketServer.TCPServer((host, port), AlivenessHandler)
+
+        # Run the aliveness check in a thread
+        thread = threading.Thread(target=self.aliveness_check.serve_forever)
+        thread.start()
+
+    def _disable_aliveness_check(self):
+        """
+        This shuts down the TCP aliveness check.
+        """
+        if self.aliveness_check:
+            self.aliveness_check.shutdown()
+            self.aliveness_check = None
 
     def _on_timer(self):
         """

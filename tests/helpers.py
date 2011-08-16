@@ -28,3 +28,14 @@ class DumbMetricsStore(MetricsStore):
 
     def flush(self, data):
         self.data.extend(data)
+
+def statsite_settings(settings):
+    """
+    Decorator to set the settings for Statsite for the "servers"
+    funcarg.
+    """
+    def decorator(func):
+        func.func_dict["statsite_settings"] = settings
+        return func
+
+    return decorator

@@ -56,6 +56,10 @@ class TestBase(object):
              }
         }
 
+        # Take override settings if they exist
+        if hasattr(request.function, "statsite_settings"):
+            settings = dict(settings.items() + request.function.statsite_settings.items())
+
         server = Statsite(settings)
         thread = threading.Thread(target=server.start)
         thread.start()
