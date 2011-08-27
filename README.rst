@@ -3,7 +3,7 @@ Statsite
 
 This is a stats aggregation server. By default, Statsite flushes data
 to `Graphite <http://graphite.wikidot.com/>`_. Statsite is based heavily
-on `Etsy's Graphite <github.com/etsy/statsd>`_.
+on `Etsy's StatsD <https://github.com/etsy/statsd>`_.
 
 Features
 --------
