@@ -99,7 +99,7 @@ class Timer(Metric):
             if len(vals) == 1:
                 vals_pct = vals
             else:
-                vals_pct    = vals[lower_idx:upper_idx]
+                vals_pct = vals[lower_idx:upper_idx]
 
             val_sum_pct = sum(vals_pct)
             val_avg_pct = val_sum_pct / inner_indexes if inner_indexes > 0 else val_sum_pct
