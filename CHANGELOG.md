@@ -1,4 +1,4 @@
-## 0.2.0 (unreleased)
+## 0.2.0 (August 31, 2011)
 
   - Add a TCP "aliveness_check" option for easier monitoring.
   - Fix off-by-one issue in calculating percentile statistics.
