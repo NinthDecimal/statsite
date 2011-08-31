@@ -90,6 +90,22 @@ class TestTimerMetric(object):
         assert ("timers.k.stdev", Timer._stdev([10, 15], 12.5), now) == self._get_metric("timers.k.stdev", result)
         assert ("timers.j.stdev", Timer._stdev([7.9, 8], 7.95), now) == self._get_metric("timers.j.stdev", result)
 
+    def test_sum_percentile(self):
+        """
+        Tests the percentile sum is properly counted.
+        """
+        now = 10
+        result = Timer.fold(self._100_timers, now)
+        assert ("timers.k.sum_90", 4545, now) == self._get_metric("timers.k.sum_90", result)
+
+    def test_mean_percentile(self):
+        """
+        Tests the percentile sum is properly counted.
+        """
+        now = 10
+        result = Timer.fold(self._100_timers, now)
+        assert ("timers.k.mean_90", 50, now) == self._get_metric("timers.k.mean_90", result)
+
     def test_stdev(self):
         """
         Tests that the standard deviation is properly computed.
@@ -109,3 +125,11 @@ class TestTimerMetric(object):
                 return metric
 
         return None
+
+    @property
+    def _100_timers(self):
+        result = []
+        for i in xrange(1, 101):
+            result.append(Timer("k", i))
+
+        return result

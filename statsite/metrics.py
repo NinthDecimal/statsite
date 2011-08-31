@@ -93,11 +93,19 @@ class Timer(Metric):
             lower_idx = (len(vals) - inner_indexes) / 2
             upper_idx = lower_idx + inner_indexes
 
-            val_sum_pct = sum(vals[lower_idx:upper_idx+1])
+            # If we only have one item, then the percentile is just the
+            # values itself, otherwise the lower_idx:upper_idx slice returns
+            # an empty list.
+            if len(vals) == 1:
+                vals_pct = vals
+            else:
+                vals_pct    = vals[lower_idx:upper_idx]
+
+            val_sum_pct = sum(vals_pct)
             val_avg_pct = val_sum_pct / inner_indexes if inner_indexes > 0 else val_sum_pct
             val_min_pct = vals[lower_idx]
             val_max_pct = vals[upper_idx]
-            val_stdev_pct = cls._stdev(vals[lower_idx:upper_idx+1], val_avg_pct)
+            val_stdev_pct = cls._stdev(vals_pct, val_avg_pct)
 
             outputs.append(("timers.%s.sum" % key, val_sum, now))
             outputs.append(("timers.%s.mean" % key, val_avg, now))
