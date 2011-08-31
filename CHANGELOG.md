@@ -1,3 +1,7 @@
+## 0.3.0 (unreleased)
+
+
+
 ## 0.2.0 (August 31, 2011)
 
   - Add a TCP "aliveness_check" option for easier monitoring.
