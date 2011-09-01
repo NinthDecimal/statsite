@@ -1,6 +1,7 @@
 ## 0.3.0 (unreleased)
 
-
+  - Class to load for various components can be passed to the
+    configuration as a string.
 
 ## 0.2.0 (August 31, 2011)
 

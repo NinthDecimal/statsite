@@ -12,7 +12,7 @@ from aggregator import DefaultAggregator
 from aliveness import AlivenessHandler
 from collector import UDPCollector
 from metrics_store import GraphiteStore
-from util import deep_merge
+from util import deep_merge, resolve_class_string
 
 BANNER = """
 Statsite v%(version)s
@@ -34,19 +34,24 @@ class Statsite(object):
 
     DEFAULT_SETTINGS = {
         "flush_interval": 10,
-        "aggregator": {},
+        "aggregator": {
+            "class": "aggregator.DefaultAggregator"
+        },
         "aliveness_check": {
             "enabled": False,
             "host": "0.0.0.0",
             "port": 8325
         },
-        "collector": {},
-        "store": {},
+        "collector": {
+            "class": "collector.UDPCollector"
+        },
+        "store": {
+            "class": "metrics_store.GraphiteStore"
+        },
         "metrics": {}
     }
 
-    def __init__(self, settings={}, collector_cls=UDPCollector, aggregator_cls=DefaultAggregator,
-                 store_cls=GraphiteStore):
+    def __init__(self, settings={}):
         """
         Initializes a new Statsite server instance. All configuration
         must be done during instantiate. If configuration changes in the
@@ -54,33 +59,45 @@ class Statsite(object):
         """
         super(Statsite, self).__init__()
 
-        # Store the classes and settings
-        self.aggregator_cls = aggregator_cls
+        # Deep merge the default settings with the given settings
         self.settings = deep_merge(self.DEFAULT_SETTINGS, settings)
+
+        # Resolve the classes for each component
+        for component in ["aggregator", "collector", "store"]:
+            key   = "_%s_cls" % component
+            value = resolve_class_string(self.settings[component]["class"])
+
+            # Delete the class from the settings, since the settings are also
+            # used for initialization, and components don't expect "class"
+            # kwarg.
+            del self.settings[component]["class"]
+
+            # Set the attribute on ourself for use everywhere else
+            setattr(self, key, value)
 
         # Setup the logger
         self.logger = logging.getLogger("statsite.statsite")
         self.logger.info(BANNER % {
                 "version": __version__,
-                "collector_cls": collector_cls,
-                "aggregator_cls": aggregator_cls,
-                "store_cls": store_cls,
+                "collector_cls": self._collector_cls,
+                "aggregator_cls": self._aggregator_cls,
+                "store_cls": self._store_cls,
                 "configuration": pprint.pformat(self.settings, width=60, indent=2)
         })
 
         # Setup the store
-        self.logger.debug("Initializing metrics store: %s" % store_cls)
-        self.store = store_cls(**self.settings["store"])
+        self.logger.debug("Initializing metrics store: %s" % self._store_cls)
+        self.store = self._store_cls(**self.settings["store"])
 
         # Setup the aggregator, provide the store
         self.settings["aggregator"]["metrics_store"] = self.store
-        self.logger.debug("Initializing aggregator: %s" % aggregator_cls)
+        self.logger.debug("Initializing aggregator: %s" % self._aggregator_cls)
         self.aggregator = self._create_aggregator()
 
         # Setup the collector, provide the aggregator
         self.settings["collector"]["aggregator"] = self.aggregator
-        self.logger.debug("Initializing collector: %s" % collector_cls)
-        self.collector =  collector_cls(**self.settings["collector"])
+        self.logger.debug("Initializing collector: %s" % self._collector_cls)
+        self.collector = self._collector_cls(**self.settings["collector"])
 
         # Setup defaults
         self.aliveness_check = None
@@ -177,7 +194,7 @@ class Statsite(object):
         """
         Returns a new aggregator with the settings given at initialization.
         """
-        return self.aggregator_cls(metrics_settings=self.settings["metrics"], **self.settings["aggregator"])
+        return self._aggregator_cls(metrics_settings=self.settings["metrics"], **self.settings["aggregator"])
 
     def _reset_timer(self):
         """

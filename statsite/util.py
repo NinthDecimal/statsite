@@ -35,3 +35,20 @@ def deep_merge(a, b):
                 else:
                     current_dst[key] = current_src[key]
     return dst
+
+def resolve_class_string(full_string):
+    """
+    Given a string such as "foo.bar.Baz" this will properly
+    import the "Baz" class from the "foo.bar" module.
+    """
+    module_string, _, cls_string = full_string.rpartition(".")
+    if module_string == "":
+        raise ValueError, "Must specify a module for class: %s" % full_string
+    elif cls_string == "":
+        raise ValueError, "Must specify a class for module: %s" % full_string
+
+    module = __import__(module_string, globals(), locals(), [cls_string], -1)
+    if not hasattr(module, cls_string):
+        raise ImportError, "Class not found in module: %s" % full_string
+
+    return getattr(module, cls_string)

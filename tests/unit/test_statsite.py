@@ -12,9 +12,19 @@ class TestStatsite(TestBase):
         """
         Returns a Statsite instance where every component is a test dummy.
         """
-        return Statsite(collector_cls=DumbCollector,
-                        aggregator_cls=DumbAggregator,
-                        store_cls=DumbMetricsStore)
+        settings = {
+            "aggregator": {
+                "class": "tests.helpers.DumbAggregator"
+            },
+            "collector": {
+                "class": "tests.helpers.DumbCollector"
+            },
+            "store": {
+                "class": "tests.helpers.DumbMetricsStore"
+            }
+        }
+
+        return Statsite(settings)
 
     def test_initialization(self, statsite_dummy):
         """
