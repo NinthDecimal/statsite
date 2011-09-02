@@ -14,6 +14,13 @@ import ConfigParser
 from optparse import OptionParser
 from ..statsite import Statsite
 
+class StatsiteCommandError(Exception):
+    """
+    This is the exception that will be raised if something goes wrong
+    executing the Statsite command.
+    """
+    pass
+
 class StatsiteCommand(object):
     TOPLEVEL_CONFIG_SECTION = "statsite"
     """
@@ -24,8 +31,8 @@ class StatsiteCommand(object):
     def __init__(self, args=None):
         # Define and parse the command line options
         parser = OptionParser()
-        parser.add_option("-c", "--config", action="store", dest="config_file",
-                          default=None, help="path to a configuration file")
+        parser.add_option("-c", "--config", action="append", dest="config_files",
+                          default=[], help="path to a configuration file")
         parser.add_option("-l", "--log-level", action="store", dest="log_level",
                           default=None, help="log level")
         parser.add_option("-s", "--setting", action="append", dest="settings",
@@ -38,8 +45,8 @@ class StatsiteCommand(object):
         # Parse the settings from file, and then from the command line,
         # since the command line trumps any file-based settings
         self.settings = {}
-        if self.options.config_file:
-            self._parse_settings_from_file(self.options.config_file)
+        if len(self.options.config_files) > 0:
+            self._parse_settings_from_file(self.options.config_files)
 
         self._parse_settings_from_options()
 
@@ -77,12 +84,13 @@ class StatsiteCommand(object):
         if self.statsite:
             self.statsite.shutdown()
 
-    def _parse_settings_from_file(self, path):
+    def _parse_settings_from_file(self, paths):
         """
         Parses settings from a configuration file.
         """
         config = ConfigParser.RawConfigParser()
-        config.read(path)
+        if config.read(paths) != paths:
+            raise StatsiteCommandError, "Failed to parse configuration files."
 
         for section in config.sections():
             settings_section = section if section != self.TOPLEVEL_CONFIG_SECTION else None

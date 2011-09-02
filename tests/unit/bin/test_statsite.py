@@ -2,8 +2,9 @@
 Contains tests for the `statsite` binary program.
 """
 
+import pytest
 from tests.base import TestBase
-from statsite.bin.statsite import StatsiteCommand
+from statsite.bin.statsite import StatsiteCommand, StatsiteCommandError
 
 class TestStatsiteBin(TestBase):
     def test_has_default_log_level(self):
@@ -12,6 +13,10 @@ class TestStatsiteBin(TestBase):
         """
         command = StatsiteCommand([])
         assert "info" == command.settings["log_level"]
+
+    def test_parse_nonexistent_file(self):
+        with pytest.raises(StatsiteCommandError):
+            StatsiteCommand(["-c", "/tmp/zomgthisshouldnevereverexiststatsitenope"])
 
     def test_parse_top_level_settings_from_file(self, tempfile):
         """
