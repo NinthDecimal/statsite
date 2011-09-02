@@ -140,8 +140,12 @@ class StatsiteCommand(object):
 
 def main():
     "The main entrypoint for the statsite command line program."
-    command = StatsiteCommand()
-    command.start()
+    try:
+        command = StatsiteCommand()
+        command.start()
+    except StatsiteCommandError, e:
+        sys.stderr.write("Error: %s\n" % e.message)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
