@@ -19,7 +19,7 @@ class TestBasic(TestBase):
         timestamp = int(time.time())
 
         def check():
-            message = "%s.%s %s %s" % (server.settings["store"]["prefix"], key, value, timestamp)
+            message = "%s.kv.%s %s %s" % (server.settings["store"]["prefix"], key, value, timestamp)
             assert [message] == graphite.messages
 
         client.send("%s:%s|kv|@%d" % (key, value, timestamp))
@@ -39,7 +39,7 @@ class TestBasic(TestBase):
 
         # The test method
         def check():
-            raw_messages = ["%s.%s %s %s" % (prefix,k,v,ts) for k,v,ts in messages]
+            raw_messages = ["%s.kv.%s %s %s" % (prefix,k,v,ts) for k,v,ts in messages]
             assert raw_messages == graphite.messages
 
         # Send all the messages
@@ -68,7 +68,7 @@ class TestBasic(TestBase):
 
         # Check the results after the flush interval
         def check():
-            raw_messages = ["%s.%s %s %s" % (prefix,k,v,ts) for k,v,ts in messages]
+            raw_messages = ["%s.kv.%s %s %s" % (prefix,k,v,ts) for k,v,ts in messages]
             assert raw_messages == graphite.messages
 
         self.after_flush_interval(check)

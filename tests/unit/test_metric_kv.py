@@ -10,7 +10,7 @@ class TestKeyValue(object):
         """Tests folding over a normal metric returns the key/value
         using the flag as the timestamp."""
         metrics = [KeyValue("k", 27, 123456)]
-        assert [("k", 27, 123456)] == KeyValue.fold(metrics, 0)
+        assert [("kv.k", 27, 123456)] == KeyValue.fold(metrics, 0)
 
     def test_defaults_flag_to_now(self, monkeypatch):
         """Tests that the flag is defaulted to the time of instantiation
@@ -18,4 +18,4 @@ class TestKeyValue(object):
         now = 27
         monkeypatch.setattr(time, 'time', lambda: now)
         metrics = [KeyValue("k", 27)]
-        assert [("k", 27, now)] == KeyValue.fold(metrics, 0)
+        assert [("kv.k", 27, now)] == KeyValue.fold(metrics, 0)

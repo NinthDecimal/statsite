@@ -18,7 +18,7 @@ class TestAggregator(TestBase):
         metrics  = [KeyValue("k", 1, now), Counter("j", 2)]
         result   = Aggregator(None)._fold_metrics(metrics)
 
-        assert 1 == result.count(("k", 1, now))
+        assert 1 == result.count(("kv.k", 1, now))
         assert 1 == result.count(("counts.j", 2, now))
 
     def test_fold_metrics_passes_metric_settings(self, monkeypatch):
@@ -47,4 +47,4 @@ class TestDefaultAggregator(TestBase):
         agg.add_metrics([KeyValue("k", 2, now)])
         agg.flush()
 
-        assert [("k", 1, now), ("k", 2, now)] == metrics_store.data
+        assert [("kv.k", 1, now), ("kv.k", 2, now)] == metrics_store.data

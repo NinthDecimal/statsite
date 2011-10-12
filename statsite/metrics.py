@@ -150,6 +150,14 @@ class KeyValue(Metric):
         # Set the flag to the current time if not set
         if flag is None: self.flag = time.time()
 
+    @classmethod
+    def fold(cls, lst, now):
+        """
+        Takes a list of the metrics objects and emits lists of (key,value,timestamp)
+        pairs. Adds the kv prefix to all the keys so as not to pollute the main namespace.
+        """
+        return [("kv.%s" % o.key,o.value,o.flag if o.flag else now) for o in lst]
+
 
 METRIC_TYPES = {
     "c": Counter,
