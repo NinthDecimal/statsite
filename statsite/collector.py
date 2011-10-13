@@ -4,6 +4,7 @@ collector.
 """
 
 import logging
+import socket
 import SocketServer
 
 import metrics
@@ -117,8 +118,19 @@ class UDPCollectorSocketServer(SocketServer.UDPServer):
     def __init__(self, *args, **kwargs):
         self.collector = kwargs["collector"]
         del kwargs["collector"]
-
         SocketServer.UDPServer.__init__(self, *args, **kwargs)
+        self._setup_socket_buffers()
+
+    def _setup_socket_buffers(self):
+        "Increases the receive buffer sizes"
+        # Try to set the buffer size to 2M, 1M, and 512K
+        for buff_size in (2*1024**2,1024**2,512*1024):
+            try:
+                # Try to set the buffer to 2MB
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2*1024**2)
+                return
+            except:
+                pass
 
 class UDPCollectorSocketHandler(SocketServer.BaseRequestHandler):
     """
