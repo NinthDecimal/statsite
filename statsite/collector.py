@@ -126,8 +126,7 @@ class UDPCollectorSocketServer(SocketServer.UDPServer):
         # Try to set the buffer size to 2M, 1M, and 512K
         for buff_size in (2*1024**2,1024**2,512*1024):
             try:
-                # Try to set the buffer to 2MB
-                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2*1024**2)
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, buff_size)
                 return
             except:
                 pass
