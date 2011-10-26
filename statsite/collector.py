@@ -123,8 +123,8 @@ class UDPCollectorSocketServer(SocketServer.UDPServer):
 
     def _setup_socket_buffers(self):
         "Increases the receive buffer sizes"
-        # Try to set the buffer size to 2M, 1M, and 512K
-        for buff_size in (2*1024**2,1024**2,512*1024):
+        # Try to set the buffer size to 4M, 2M, 1M, and 512K
+        for buff_size in (4*1024**2,2*1024**2,1024**2,512*1024):
             try:
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, buff_size)
                 return
