@@ -1,3 +1,7 @@
+## 0.4.1 (unreleased)
+
+
+
 ## 0.4.0 (October 26, 2011)
 
   - Multiple "-c" configuration files can be passed to `statsite`.
