@@ -145,5 +145,80 @@ class UDPCollectorSocketHandler(SocketServer.BaseRequestHandler):
             # Add the parsed metrics to the aggregator
             metrics = self.server.collector._parse_metrics(message)
             self.server.collector._add_metrics(metrics)
-        except Exception, e:
+        except Exception:
             self.server.collector.logger.exception("Exception during processing UDP packet")
+
+
+class TCPCollector(Collector):
+    """
+    This is a collector which listens for TCP connections,
+    spawns a thread for each one, parses incoming metrics,
+    and adds them to the aggregator.
+    """
+
+    def __init__(self, host="0.0.0.0", port=8125, **kwargs):
+        super(TCPCollector, self).__init__(**kwargs)
+
+        self.server = TCPCollectorSocketServer((host, int(port)),
+                                               TCPCollectorSocketHandler,
+                                               collector=self)
+        self.logger = logging.getLogger("statsite.tcpcollector")
+
+    def start(self):
+        # Run the main server forever, blocking this thread
+        self.logger.debug("TCPCollector starting")
+        self.server.serve_forever()
+
+    def shutdown(self):
+        # Tell the main server to stop
+        self.logger.debug("TCPCollector shutting down")
+        self.server.shutdown()
+
+
+class TCPCollectorSocketServer(SocketServer.TCPServer, SocketServer.ThreadingMixIn):
+    """
+    The SocketServer implementation for the UDP collector.
+    """
+    allow_reuse_address = True
+    request_queue_size = 50 # Allow more waiting connections
+    daemon_threads = True # Gracefully exit if our request handler threads are around
+    timeout = 10          # Use a default timeout for connections
+
+    def __init__(self, *args, **kwargs):
+        self.collector = kwargs["collector"]
+        del kwargs["collector"]
+        SocketServer.TCPServer.__init__(self, *args, **kwargs)
+        self._setup_socket_buffers()
+
+    def _setup_socket_buffers(self):
+        "Increases the receive buffer sizes"
+        # Try to set the buffer size to 4M, 2M, 1M, and 512K
+        for buff_size in (4*1024**2,2*1024**2,1024**2,512*1024):
+            try:
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, buff_size)
+                return
+            except:
+                pass
+
+
+class TCPCollectorSocketHandler(SocketServer.StreamRequestHandler):
+    """
+    Simple handler that receives TCP connections, parses them, and adds
+    them to the aggregator.
+    """
+    daemon_threads = True # Gracefully exit if our request handler threads are around
+    timeout = 10          # Use a default timeout for connections
+
+    def handle(self):
+        while True:
+            try:
+                # Read a line of input
+                line = self.rfile.readline()
+
+                # Add the parsed metrics to the aggregator
+                metrics = self.server.collector._parse_metrics(line)
+                self.server.collector._add_metrics(metrics)
+            except Exception:
+                self.server.collector.logger.exception("Exception during processing TCP connection")
+                break
+

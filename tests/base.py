@@ -73,6 +73,47 @@ class TestBase(object):
 
         return (client, server, graphite)
 
+    def pytest_funcarg__servers_tcp(self, request):
+        """
+        This creates a pytest funcarg for a client to a running Statsite
+        server. In this configuration, the server listens on TCP and the client
+        is a TCP socket.
+        """
+        # Instantiate a graphite server
+        graphite = request.getfuncargvalue("graphite")
+
+        # Instantiate server
+        settings = {
+            "flush_interval": self.DEFAULT_INTERVAL,
+            "collector": {
+                "host": "localhost",
+                "port": graphite.port + 1,
+                "class": "collector.TCPCollector"
+             },
+            "store": {
+                "host": "localhost",
+                "port": graphite.port,
+                "prefix": "foobar"
+             }
+        }
+
+        # Take override settings if they exist
+        if hasattr(request.function, "statsite_settings"):
+            settings = dict(settings.items() + request.function.statsite_settings.items())
+
+        server = Statsite(settings)
+        thread = threading.Thread(target=server.start)
+        thread.start()
+
+        # Add a finalizer to make sure the server is properly shutdown
+        request.addfinalizer(lambda: server.shutdown())
+
+        # Create the UDP client connected to the statsite server
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((settings["collector"]["host"], settings["collector"]["port"]))
+
+        return (client, server, graphite)
+
     def pytest_funcarg__graphite(self, request):
         """
         This creates a pytest funcarg for a fake Graphite server.
