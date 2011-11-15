@@ -175,7 +175,7 @@ class TCPCollector(Collector):
         self.server.shutdown()
 
 
-class TCPCollectorSocketServer(SocketServer.TCPServer, SocketServer.ThreadingMixIn):
+class TCPCollectorSocketServer(SocketServer.ThreadingTCPServer):
     """
     The SocketServer implementation for the UDP collector.
     """
@@ -214,6 +214,7 @@ class TCPCollectorSocketHandler(SocketServer.StreamRequestHandler):
             try:
                 # Read a line of input
                 line = self.rfile.readline()
+                if not line: break
 
                 # Add the parsed metrics to the aggregator
                 metrics = self.server.collector._parse_metrics(line)
