@@ -29,6 +29,8 @@ Or download and install from source::
 
     python setup.py install
 
+Note: Tested only with Python 2.6+
+
 Usage
 -----
 
