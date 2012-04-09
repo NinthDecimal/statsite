@@ -90,8 +90,10 @@ class DefaultAggregator(Aggregator):
         self.kv_metrics_queue = []
         self.timer_metrics_queue = []
         self.counter_values = {}
+        self.num_metrics = 0
 
     def add_metrics(self, new_metrics):
+        self.num_metrics += len(new_metrics)
         for m in new_metrics:
             if isinstance(m, metrics.Counter):
                 m._fold(self.counter_values)
