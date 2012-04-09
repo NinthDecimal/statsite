@@ -96,9 +96,9 @@ class TCPCollector(Collector):
     """
 
     def __init__(self, host="0.0.0.0", port=8125, **kwargs):
-        super(TCPCollector, self).__init__()
+        super(TCPCollector, self).__init__(kwargs["aggregator"])
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.logger = logging.getLogger("statsite.tcpcollector")
 
     def start(self):
