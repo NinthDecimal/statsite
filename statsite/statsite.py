@@ -8,10 +8,7 @@ import SocketServer
 import threading
 
 from . import __version__
-from aggregator import DefaultAggregator
 from aliveness import AlivenessHandler
-from collector import UDPCollector
-from metrics_store import GraphiteStore
 from util import deep_merge, resolve_class_string
 
 BANNER = """
@@ -25,6 +22,7 @@ Statsite v%(version)s
 [configuration]
 %(configuration)s
 """
+
 
 class Statsite(object):
     """
@@ -43,7 +41,7 @@ class Statsite(object):
             "port": 8325
         },
         "collector": {
-            "class": "collector.UDPCollector"
+            "class": "collector.TCPCollector"
         },
         "store": {
             "class": "metrics_store.GraphiteStore"
@@ -149,6 +147,7 @@ class Statsite(object):
 
         # Create the server
         self.aliveness_check = SocketServer.TCPServer((host, port), AlivenessHandler)
+        self.aliveness_check.allow_reuse_address = True
 
         # Run the aliveness check in a thread
         thread = threading.Thread(target=self.aliveness_check.serve_forever)
@@ -177,7 +176,7 @@ class Statsite(object):
         This is called periodically to flush the aggregator and switch
         the collector to a new aggregator.
         """
-        self.logger.debug("Flushing and switching aggregator...")
+        self.logger.info("Flushing and switching aggregator...")
 
         # Create a new aggregator and tell the collection to begin using
         # it immediately.
@@ -204,4 +203,6 @@ class Statsite(object):
             self.timer.cancel()
 
         self.timer = threading.Timer(int(self.settings["flush_interval"]), self._on_timer)
+        self.timer.daemon = True
         self.timer.start()
+
