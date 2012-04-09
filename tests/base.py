@@ -8,11 +8,14 @@ import socket
 import tempfile
 import time
 import threading
-
-from statsite.statsite import Statsite
+import os
+import os.path
+import shutil
+import subprocess
 
 from graphite import GraphiteServer, GraphiteHandler
 from helpers import DumbAggregator, DumbMetricsStore
+
 
 class TestBase(object):
     """
@@ -43,8 +46,12 @@ class TestBase(object):
         graphite = request.getfuncargvalue("graphite")
 
         # Instantiate server
+        # Instantiate server
         settings = {
             "flush_interval": self.DEFAULT_INTERVAL,
+            "aliveness_check": {
+                "enabled": 0,
+            },
             "collector": {
                 "host": "localhost",
                 "port": graphite.port + 1
@@ -60,18 +67,79 @@ class TestBase(object):
         if hasattr(request.function, "statsite_settings"):
             settings = dict(settings.items() + request.function.statsite_settings.items())
 
-        server = Statsite(settings)
-        thread = threading.Thread(target=server.start)
-        thread.start()
+        # Flatten the settings
+        flat_settings = {}
+        for key, val in settings.iteritems():
+            if isinstance(val, dict):
+                for sub_key, sub_val in val.iteritems():
+                    flat_settings[key + "." + sub_key] = sub_val
+            else:
+                flat_settings[key] = val
 
-        # Add a finalizer to make sure the server is properly shutdown
-        request.addfinalizer(lambda: server.shutdown())
+        config = """[statsite]
+flush_interval = %(flush_interval)d
 
-        # Create the UDP client connected to the statsite server
-        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        client.connect((settings["collector"]["host"], settings["collector"]["port"]))
+[aliveness_check]
+enabled = %(aliveness_check.enabled)s
 
-        return (client, server, graphite)
+[collector]
+host = %(collector.host)s
+port = %(collector.port)d
+
+[store]
+host = %(store.host)s
+port = %(store.port)d
+prefix = %(store.prefix)s
+""" % flat_settings
+
+        # Write the configuration
+        tmpdir = tempfile.mkdtemp()
+        config_path = os.path.join(tmpdir, "config.cfg")
+        open(config_path, "w").write(config)
+
+        # Start the process
+        proc = subprocess.Popen("statsite --config %s" % config_path, shell=True)
+        proc.poll()
+        assert proc.returncode is None
+
+        # Define a cleanup handler
+        def cleanup():
+            try:
+                proc.terminate()
+                proc.wait()
+                shutil.rmtree(tmpdir)
+            except:
+                pass
+        request.addfinalizer(cleanup)
+
+        # Take override settings if they exist
+        if hasattr(request.function, "statsite_settings"):
+            settings = dict(settings.items() + request.function.statsite_settings.items())
+
+        # Create the TCP client connected to the statsite server
+        time.sleep(0.1)
+        start = time.time()
+        client = None
+        while time.time() - start < 5:
+            try:
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client.connect((settings["collector"]["host"], settings["collector"]["port"]))
+                break
+            except:
+                # Retry
+                client = None
+                pass
+
+        if client is None:
+            raise Exception("Timed out trying to connect!")
+
+        class Server(object):
+            pass
+
+        srv = Server()
+        srv.settings = settings
+
+        return (client, srv, graphite)
 
     def pytest_funcarg__servers_tcp(self, request):
         """
@@ -79,40 +147,7 @@ class TestBase(object):
         server. In this configuration, the server listens on TCP and the client
         is a TCP socket.
         """
-        # Instantiate a graphite server
-        graphite = request.getfuncargvalue("graphite")
-
-        # Instantiate server
-        settings = {
-            "flush_interval": self.DEFAULT_INTERVAL,
-            "collector": {
-                "host": "localhost",
-                "port": graphite.port + 1,
-                "class": "collector.TCPCollector"
-             },
-            "store": {
-                "host": "localhost",
-                "port": graphite.port,
-                "prefix": "foobar"
-             }
-        }
-
-        # Take override settings if they exist
-        if hasattr(request.function, "statsite_settings"):
-            settings = dict(settings.items() + request.function.statsite_settings.items())
-
-        server = Statsite(settings)
-        thread = threading.Thread(target=server.start)
-        thread.start()
-
-        # Add a finalizer to make sure the server is properly shutdown
-        request.addfinalizer(lambda: server.shutdown())
-
-        # Create the UDP client connected to the statsite server
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((settings["collector"]["host"], settings["collector"]["port"]))
-
-        return (client, server, graphite)
+        return self.pytest_funcarg__servers(request)
 
     def pytest_funcarg__graphite(self, request):
         """
@@ -152,7 +187,7 @@ class TestBase(object):
         """
         # Wait the given interval
         interval = self.DEFAULT_INTERVAL if interval is None else interval
-        interval += 0.5
+        interval += 1
         time.sleep(interval)
 
         # Call the callback

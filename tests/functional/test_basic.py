@@ -22,7 +22,7 @@ class TestBasic(TestBase):
             message = "%s.kv.%s %s %s" % (server.settings["store"]["prefix"], key, value, timestamp)
             assert [message] == graphite.messages
 
-        client.send("%s:%s|kv|@%d" % (key, value, timestamp))
+        client.send("%s:%s|kv|@%d\n" % (key, value, timestamp))
         self.after_flush_interval(check)
 
     def test_multiple_key_value(self, servers):
@@ -44,7 +44,7 @@ class TestBasic(TestBase):
 
         # Send all the messages
         for message in messages:
-            client.send("%s:%s|kv|@%d" % message)
+            client.send("%s:%s|kv|@%d\n" % message)
 
         # Verify they were properly received
         self.after_flush_interval(check)
@@ -60,11 +60,11 @@ class TestBasic(TestBase):
         messages = [("k", 1, int(time.time())), ("j", 2, int(time.time()))]
 
         # Send the first message and wait the flush interval
-        client.send("%s:%s|kv|@%d" % messages[0])
+        client.send("%s:%s|kv|@%d\n" % messages[0])
         self.after_flush_interval(lambda: None)
 
         # Send the second message
-        client.send("%s:%s|kv|@%d" % messages[1])
+        client.send("%s:%s|kv|@%d\n" % messages[1])
 
         # Check the results after the flush interval
         def check():
@@ -81,7 +81,7 @@ class TestBasic(TestBase):
         client, server, graphite = servers
 
         # Send some data to graphite and wait the flush interval
-        client.send("k:1|kv")
+        client.send("k:1|kv\n")
         self.after_flush_interval(lambda: None)
 
         # Verify that the data was received at least after the
@@ -89,6 +89,7 @@ class TestBasic(TestBase):
         duration = graphite.last_receive - statsite_init_time
         epsilon  = 0.1
         assert abs(int(self.DEFAULT_INTERVAL) - duration) <= epsilon
+
 
 class TestBasicTCP(TestBase):
     def test_single_key_value(self, servers_tcp):
