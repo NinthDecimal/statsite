@@ -7,6 +7,7 @@ import logging
 import time
 import metrics
 
+
 class Aggregator(object):
     def __init__(self, metrics_store, metrics_settings={}):
         """
@@ -55,7 +56,7 @@ class Aggregator(object):
         This format is much more efficient for ``_fold_metrics``.
         """
         result = {}
-        for metric_type,metric_settings in settings.iteritems():
+        for metric_type, metric_settings in settings.iteritems():
             result[metrics.METRIC_TYPES[metric_type]] = metric_settings
 
         return result
@@ -75,30 +76,49 @@ class Aggregator(object):
         # Fold over the metrics
         data = []
         now = time.time()
-        for cls,metrics in metrics_by_type.iteritems():
+        for cls, metrics in metrics_by_type.iteritems():
             data.extend(cls.fold(metrics, now, **self.metrics_settings.get(cls, {})))
 
         return data
+
 
 class DefaultAggregator(Aggregator):
     def __init__(self, *args, **kwargs):
         super(DefaultAggregator, self).__init__(*args, **kwargs)
 
-        self.metrics_queue = []
         self.logger = logging.getLogger("statsite.aggregator.default")
+        self.kv_metrics_queue = []
+        self.timer_metrics_queue = []
+        self.counter_values = {}
 
-    def add_metrics(self, metrics):
-        self.metrics_queue.extend(metrics)
+    def add_metrics(self, new_metrics):
+        for m in new_metrics:
+            if isinstance(m, metrics.Counter):
+                m._fold(self.counter_values)
+
+            elif isinstance(m, metrics.Timer):
+                self.timer_metrics_queue.append(m)
+
+            elif isinstance(m, metrics.KeyValue):
+                self.kv_metrics_queue.append(m)
+
+            else:
+                self.logger.error("Unrecognized metric type: %s" % type(m))
 
     def flush(self):
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("Aggregating data...")
-
-            for metric in self.metrics_queue:
-                self.logger.debug("Metric: %s" % repr(metric))
-
         try:
-            data = self._fold_metrics(self.metrics_queue)
+            # Fold over the metrics
+            now = time.time()
+            counter_data = [("counts.%s" % key, value, now) for key, value
+                                        in self.counter_values.iteritems()]
+
+            timer_data = metrics.Timer.fold(self.timer_metrics_queue, now,
+                    **self.metrics_settings.get("Timer", {}))
+
+            kv_data = metrics.KeyValue.fold(self.kv_metrics_queue, now,
+                    **self.metrics_settings.get("KeyValue", {}))
+
+            data = counter_data + timer_data + kv_data
         except:
             self.logger.exception("Failed to fold metrics data")
 
@@ -109,3 +129,4 @@ class DefaultAggregator(Aggregator):
             self.logger.exception("Failed to flush data")
 
         self.logger.debug("Aggregation complete.")
+
