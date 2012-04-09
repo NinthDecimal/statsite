@@ -21,6 +21,7 @@ setup(name='statsite',
       entry_points={
         "console_scripts": ["statsite = statsite.bin.statsite:main"]
       },
+      install_requires=["twisted==12.0.0"],
       classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: System Administrators",
