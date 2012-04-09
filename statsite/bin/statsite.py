@@ -7,12 +7,11 @@
 
 import logging
 import logging.handlers
-import signal
 import sys
-import threading
 import ConfigParser
 from optparse import OptionParser
 from ..statsite import Statsite
+
 
 class StatsiteCommandError(Exception):
     """
@@ -20,6 +19,7 @@ class StatsiteCommandError(Exception):
     executing the Statsite command.
     """
     pass
+
 
 class StatsiteCommand(object):
     TOPLEVEL_CONFIG_SECTION = "statsite"
@@ -62,27 +62,8 @@ class StatsiteCommand(object):
         """
         Runs the statiste application.
         """
-        signal.signal(signal.SIGINT, self._on_sigint)
         self.statsite = Statsite(self.settings)
-
-        # Run Statsite in a separate thread so that signal handlers can
-        # properly shut it down.
-        thread = threading.Thread(target=self.statsite.start)
-        thread.daemon = True
-        thread.start()
-
-        # Apparently `thread.join` blocks the main thread and makes it
-        # _uninterruptable_, so we need to do this loop so that the main
-        # thread can respond to signal handlers.
-        while thread.isAlive():
-            thread.join(0.2)
-
-    def _on_sigint(self, signal, frame):
-        """
-        Called when a SIGINT is sent to cleanly shutdown the statsite server.
-        """
-        if self.statsite:
-            self.statsite.shutdown()
+        self.statsite.start()
 
     def _parse_settings_from_file(self, paths):
         """
@@ -90,7 +71,7 @@ class StatsiteCommand(object):
         """
         config = ConfigParser.RawConfigParser()
         if config.read(paths) != paths:
-            raise StatsiteCommandError, "Failed to parse configuration files."
+            raise StatsiteCommandError("Failed to parse configuration files.")
 
         for section in config.sections():
             settings_section = section if section != self.TOPLEVEL_CONFIG_SECTION else None
@@ -137,6 +118,7 @@ class StatsiteCommand(object):
 
         # Finally set the value onto the settings
         current[key] = value
+
 
 def main():
     "The main entrypoint for the statsite command line program."
