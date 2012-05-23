@@ -1,3 +1,7 @@
+**NOTE:**  This version has been deprecated in favor of https://github.com/armon/statsite, which provides
+API compatibility but is much faster and more scalable.
+
+
 Statsite
 ========
 
