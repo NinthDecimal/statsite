@@ -6,6 +6,7 @@ import socket
 import threading
 import logging
 
+
 class MetricsStore(object):
     """
     This is the base class for all metric stores. There is only one
@@ -24,6 +25,7 @@ class MetricsStore(object):
         """
         raise NotImplementedError("flush not implemented")
 
+
 class GraphiteStore(MetricsStore):
     def __init__(self, host="localhost", port=2003, prefix="statsite", attempts=3):
         """
@@ -39,16 +41,18 @@ class GraphiteStore(MetricsStore):
         # Convert the port to an int since its coming from a configuration file
         port = int(port)
 
-        if port <= 0: raise ValueError, "Port must be positive!"
-        if attempts <= 1: raise ValueError, "Must have at least 1 attempt!"
+        if port <= 0:
+            raise ValueError, "Port must be positive!"
+        if attempts <= 1:
+            raise ValueError, "Must have at least 1 attempt!"
 
         self.host = host
         self.port = port
         self.prefix = prefix
         self.attempts = attempts
         self.sock_lock = threading.Lock()
-        self.sock = self._create_socket()
         self.logger = logging.getLogger("statsite.graphitestore")
+        self.sock = self._create_socket()
 
     def flush(self, metrics):
         """
@@ -58,7 +62,7 @@ class GraphiteStore(MetricsStore):
         - `metrics` : A list of (key,value,timestamp) tuples.
         """
         # Construct the output
-        data = "\n".join(["%s.%s %s %d" % (self.prefix,k,v,ts) for k,v,ts in metrics]) + "\n"
+        data = "\n".join(["%s.%s %s %d" % (self.prefix, k, v, ts) for k, v, ts in metrics]) + "\n"
 
         # Serialize writes to the socket
         self.sock_lock.acquire()
@@ -79,7 +83,7 @@ class GraphiteStore(MetricsStore):
     def _create_socket(self):
         """Creates a socket and connects to the graphite server"""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.host,self.port))
+        sock.connect((self.host, self.port))
         return sock
 
     def _write_metric(self, metric):
@@ -92,4 +96,5 @@ class GraphiteStore(MetricsStore):
                 self.logger.exception("Error while flushing to graphite. Reattempting...")
                 self.sock = self._create_socket()
 
-        self.logger.critical("Failed to flush to Graphite! Gave up after %d attempts." % self.attempts)
+        self.logger.critical(
+            "Failed to flush to Graphite! Gave up after %d attempts." % self.attempts)
